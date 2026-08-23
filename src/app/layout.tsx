@@ -1,8 +1,9 @@
 import '@/app/globals.css';
 
+import { Spinner } from '@heroui/react';
 import { Metadata } from 'next';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import { FC } from 'react';
+import { FC, Suspense } from 'react';
 
 import Header from '@/components/Layout/Header';
 import Providers from '@/components/Providers/Providers';
@@ -27,7 +28,17 @@ const RootLayout: FC<Props> = ({ children }) => {
                 <NuqsAdapter>
                     <Providers>
                         <Header />
-                        {children}
+                        {/* NuqsAdapter makes descendants read useSearchParams, which requires a
+                            Suspense boundary during prerender — kept here so every route is covered. */}
+                        <Suspense
+                            fallback={
+                                <div className="flex flex-1 items-center justify-center">
+                                    <Spinner />
+                                </div>
+                            }
+                        >
+                            {children}
+                        </Suspense>
                     </Providers>
                 </NuqsAdapter>
             </body>

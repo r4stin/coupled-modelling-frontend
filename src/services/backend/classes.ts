@@ -8,4 +8,5 @@ export const getClassHierarchyMetadata = () => backendApi.get(classesUrl).json<C
 export const getClassInstanceSummaries = (className: string) =>
     backendApi.get('get_class_instance_summaries/', { searchParams: { class: className } }).json<ClassInstanceSummary[]>();
 
-export const getClassMetadata = (className: string) => backendApi.get('get_class_metadata/', { searchParams: { class: className } }).json<ClassMetadata>();
+export const getClassMetadata = (className: string) =>
+    backendApi.get('get_class_metadata/', { searchParams: { class: className } }).json<ClassMetadata>();
