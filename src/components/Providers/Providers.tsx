@@ -8,7 +8,6 @@ import { SWRConfig } from 'swr';
 const Providers = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     return (
-        // Same theming setup as orkg-frontend: class + data-theme attributes, light default
         <NextThemesProvider attribute={['class', 'data-theme']} defaultTheme="light" enableSystem={false} storageKey="cm-theme">
             <RouterProvider navigate={router.push}>
                 <SWRConfig value={{ revalidateOnFocus: false, shouldRetryOnError: false }}>{children}</SWRConfig>

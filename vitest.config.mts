@@ -15,6 +15,8 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            // Components render outside a Next.js runtime in tests, where the real hooks throw.
+            'next/navigation': path.resolve(__dirname, './src/lib/nextNavigationMock.ts'),
         },
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
