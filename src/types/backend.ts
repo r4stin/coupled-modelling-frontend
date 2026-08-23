@@ -1,17 +1,30 @@
 /**
  * Types for the coupled_modelling Flask API responses.
- * TODO: refine/generate these from the OpenAPI spec (backend repo, plan task 0.5).
+ *
+ * Aliases over the types generated from the backend's OpenAPI spec
+ * (coupled_modelling/openapi.yaml). Regenerate with `npm run generate:api-types`
+ * after the spec changes — do not edit src/types/openapi.ts by hand.
  */
+import type { components } from '@/types/openapi';
 
-export type HealthResponse = {
-    status: 'ok' | 'error';
-    graphdb: string;
-    repository: string;
-    error?: string;
-};
+export type ApiError = components['schemas']['Error'];
 
-// Loose placeholder types until the OpenAPI spec is the source of truth.
-export type ClassHierarchyMetadata = Record<string, unknown>;
-export type ClassInstanceSummary = Record<string, unknown>;
-export type ClassMetadata = Record<string, unknown>;
-export type InstancePropertyMetadata = Record<string, unknown>;
+export type HealthResponse = components['schemas']['HealthOk'] | components['schemas']['HealthError'];
+
+export type ClassHierarchyEntry = components['schemas']['ClassHierarchyEntry'];
+export type ClassHierarchyMetadata = ClassHierarchyEntry[];
+
+export type ClassInstanceSummary = components['schemas']['InstanceSummary'];
+export type PreviewItem = components['schemas']['PreviewItem'];
+
+export type ClassMetadata = components['schemas']['ClassMetadata'];
+export type Restriction = components['schemas']['Restriction'];
+export type NamedReference = components['schemas']['NamedReference'];
+
+export type InstancePropertyMetadata = components['schemas']['InstanceMetadata'];
+export type InstancePropertyGroup = components['schemas']['InstancePropertyGroup'];
+export type ObjectPropertyValue = components['schemas']['ObjectPropertyValue'];
+export type LiteralPropertyValue = components['schemas']['LiteralPropertyValue'];
+
+export type InstanceId = components['schemas']['InstanceId'];
+export type PropertyDataMap = components['schemas']['PropertyDataMap'];

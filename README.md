@@ -2,7 +2,13 @@
 
 Web explorer for the coupled multiphysics simulation knowledge base ([coupled_modelling](https://github.com/r4stin/coupled_modelling) backend: Kratos CoSimulation configurations stored as OWL in GraphDB).
 
-Built on the ORKG stack: **Next.js 16 · React 19 · TypeScript · HeroUI v3 · Tailwind CSS v4 · SWR · nuqs**.
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?logo=nextdotjs&logoColor=white)]()
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg?logo=typescript&logoColor=white)]()
+[![HeroUI](https://img.shields.io/badge/HeroUI-v3-7828C8.svg)]()
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4.svg?logo=tailwindcss&logoColor=white)]()
+[![SWR](https://img.shields.io/badge/SWR-Data_Fetching-000000.svg?logo=swr&logoColor=white)]()
+[![nuqs](https://img.shields.io/badge/nuqs-URL_State-4B5563.svg)]()
 
 ## Getting started
 
@@ -27,6 +33,7 @@ Built on the ORKG stack: **Next.js 16 · React 19 · TypeScript · HeroUI v3 · 
 | `npm test` | Tests (Vitest) |
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run type-check` | TypeScript check |
+| `npm run generate:api-types` | Regenerate API types from the running backend's OpenAPI spec |
 
 ## Structure
 
@@ -37,5 +44,5 @@ src/
 ├── services/backend/   # Flask API calls — one file per resource (ky client)
 ├── constants/
 ├── lib/
-└── types/              # API response types
+└── types/              # API response types (openapi.ts is generated from the backend OpenAPI spec)
 ```
