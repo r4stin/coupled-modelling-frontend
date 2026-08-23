@@ -4,6 +4,7 @@ import { cn, IconChevronRight } from '@heroui/react';
 import { FC } from 'react';
 
 import { ClassTreeNode } from '@/lib/classTree';
+import { selectableRowClass } from '@/lib/styles';
 
 type Props = {
     node: ClassTreeNode;
@@ -23,12 +24,7 @@ const ClassTreeNodeItem: FC<Props> = ({ node, parentPath, isExpanded, selectedCl
 
     return (
         <li>
-            <div
-                className={cn(
-                    'flex items-center gap-1 rounded-md',
-                    isSelected ? 'bg-accent-soft text-accent-soft-foreground' : 'hover:bg-default-soft',
-                )}
-            >
+            <div className={selectableRowClass(isSelected, 'flex items-center gap-1')}>
                 {hasChildren ? (
                     <button
                         type="button"

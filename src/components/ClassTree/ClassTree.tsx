@@ -1,17 +1,17 @@
 'use client';
 
-import { Alert, EmptyState, Spinner } from '@heroui/react';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import ClassTreeNodeItem from '@/components/ClassTree/ClassTreeNodeItem';
+import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
 import { buildClassTree, findPathsToClass } from '@/lib/classTree';
-import { useSelectedClass } from '@/lib/useSelectedClass';
+import { useExplorerSelection } from '@/lib/useExplorerSelection';
 import { classesUrl, getClassHierarchyMetadata } from '@/services/backend/classes';
 
 const ClassTree = () => {
     const { data, error, isLoading } = useSWR(classesUrl, getClassHierarchyMetadata);
-    const [selectedClass, setSelectedClass] = useSelectedClass();
+    const { selectedClass, selectClass } = useExplorerSelection();
     // Explicit user choices per node path; anything else falls back to auto-expansion.
     const [overrides, setOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
 
@@ -31,8 +31,8 @@ const ClassTree = () => {
 
     const toggleExpanded = (path: string) => setOverrides((current) => new Map(current).set(path, !isExpanded(path)));
 
-    const selectClass = (name: string) => {
-        setSelectedClass(name);
+    const handleSelect = (name: string) => {
+        selectClass(name);
         // Re-selecting a manually collapsed class should reveal its subclasses again.
         setOverrides((current) => {
             const next = new Map(current);
@@ -45,42 +45,29 @@ const ClassTree = () => {
         });
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex h-full items-center justify-center" role="status" aria-label="Loading classes">
-                <Spinner size="sm" />
-            </div>
-        );
-    }
-    if (error && !data) {
-        return (
-            <Alert status="danger" className="m-2">
-                <Alert.Indicator />
-                <Alert.Content>
-                    <Alert.Title>Could not load the class hierarchy</Alert.Title>
-                    <Alert.Description>Check the backend connection, then refresh.</Alert.Description>
-                </Alert.Content>
-            </Alert>
-        );
-    }
-    if (tree.length === 0) {
-        return <EmptyState className="m-4">No classes found in the project namespace.</EmptyState>;
-    }
-
     return (
-        <ul className="p-2">
-            {tree.map((node) => (
-                <ClassTreeNodeItem
-                    key={node.name}
-                    node={node}
-                    parentPath=""
-                    isExpanded={isExpanded}
-                    selectedClass={selectedClass}
-                    onToggle={toggleExpanded}
-                    onSelect={selectClass}
-                />
-            ))}
-        </ul>
+        <PaneStateBoundary
+            isLoading={isLoading}
+            loadingLabel="Loading classes"
+            hasError={Boolean(error) && !data}
+            errorTitle="Could not load the class hierarchy"
+            isEmpty={tree.length === 0}
+            emptyMessage="No classes found in the project namespace."
+        >
+            <ul className="p-2">
+                {tree.map((node) => (
+                    <ClassTreeNodeItem
+                        key={node.name}
+                        node={node}
+                        parentPath=""
+                        isExpanded={isExpanded}
+                        selectedClass={selectedClass}
+                        onToggle={toggleExpanded}
+                        onSelect={handleSelect}
+                    />
+                ))}
+            </ul>
+        </PaneStateBoundary>
     );
 };
 

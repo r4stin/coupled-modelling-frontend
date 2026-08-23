@@ -1,15 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import ExplorerShell from '@/components/ExplorerShell/ExplorerShell';
-import { getClassHierarchyMetadata } from '@/services/backend/classes';
+import { getClassHierarchyMetadata, getClassInstanceSummaries } from '@/services/backend/classes';
 import { render, screen } from '@/testUtils';
 
 vi.mock('@/services/backend/classes', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/backend/classes')>()),
     getClassHierarchyMetadata: vi.fn(),
+    getClassInstanceSummaries: vi.fn(),
 }));
 
 const mockHierarchy = vi.mocked(getClassHierarchyMetadata);
+const mockSummaries = vi.mocked(getClassInstanceSummaries);
 
 describe('ExplorerShell', () => {
     it('renders the three explorer panes', async () => {
@@ -29,11 +31,12 @@ describe('ExplorerShell', () => {
         await screen.findByText('No classes found in the project namespace.');
     });
 
-    it('reflects the class selected in the URL in the Instances pane', async () => {
+    it('shows the instance list for the class selected in the URL', async () => {
         mockHierarchy.mockResolvedValue([{ class: 'solvers', parents: [] }]);
+        mockSummaries.mockResolvedValue([]);
         render(<ExplorerShell />, { searchParams: '?class=solvers' });
         expect(screen.getByRole('heading', { name: 'Instances · solvers' })).toBeInTheDocument();
-        expect(screen.getByText('Instances of “solvers” will be listed here.')).toBeInTheDocument();
+        expect(await screen.findByText('No instances found for this class.')).toBeInTheDocument();
         await screen.findByRole('button', { name: 'solvers' });
     });
 });

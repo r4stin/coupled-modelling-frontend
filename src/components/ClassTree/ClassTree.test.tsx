@@ -75,6 +75,24 @@ describe('ClassTree', () => {
         expect(screen.getAllByRole('button', { name: 'leaf' })).toHaveLength(1);
     });
 
+    it('clears the selected instance when a different class is selected', async () => {
+        mockHierarchy.mockResolvedValue(hierarchy);
+        const onUrlUpdate = vi.fn();
+        render(<ClassTree />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
+        await userEvent.click(await screen.findByRole('button', { name: 'data' }));
+        const params = onUrlUpdate.mock.lastCall?.[0].searchParams;
+        expect(params?.get('class')).toBe('data');
+        expect(params?.get('instance')).toBeNull();
+    });
+
+    it('keeps the selected instance when re-selecting the same class', async () => {
+        mockHierarchy.mockResolvedValue(hierarchy);
+        const onUrlUpdate = vi.fn();
+        render(<ClassTree />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
+        await userEvent.click(await screen.findByRole('button', { name: 'solvers' }));
+        expect(onUrlUpdate).not.toHaveBeenCalled();
+    });
+
     it('shows an error message when the hierarchy cannot be loaded', async () => {
         mockHierarchy.mockRejectedValue(new Error('network down'));
         render(<ClassTree />);

@@ -4,7 +4,8 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ClassTree from '@/components/ClassTree/ClassTree';
 import ExplorerPane from '@/components/ExplorerShell/ExplorerPane';
-import { useSelectedClass } from '@/lib/useSelectedClass';
+import InstanceList from '@/components/InstanceList/InstanceList';
+import { useExplorerSelection } from '@/lib/useExplorerSelection';
 
 const PaneResizeHandle = () => (
     <PanelResizeHandle className="w-1 shrink-0 bg-border transition-colors data-[resize-handle-state=drag]:bg-accent data-[resize-handle-state=hover]:bg-accent" />
@@ -17,9 +18,8 @@ const PanePlaceholder = ({ children }: { children: string }) => (
 );
 
 const ExplorerShell = () => {
-    const [selectedClass] = useSelectedClass();
+    const { selectedClass } = useExplorerSelection();
     const instancesTitle = selectedClass ? `Instances · ${selectedClass}` : 'Instances';
-    const instancesHint = selectedClass ? `Instances of “${selectedClass}” will be listed here.` : 'Select a class to list its instances.';
 
     return (
         <PanelGroup direction="horizontal" autoSaveId="cm-explorer-panes" className="min-h-0 flex-1">
@@ -31,7 +31,11 @@ const ExplorerShell = () => {
             <PaneResizeHandle />
             <Panel defaultSize={38} minSize={20}>
                 <ExplorerPane title={instancesTitle}>
-                    <PanePlaceholder>{instancesHint}</PanePlaceholder>
+                    {selectedClass ? (
+                        <InstanceList key={selectedClass} classId={selectedClass} />
+                    ) : (
+                        <PanePlaceholder>Select a class to list its instances.</PanePlaceholder>
+                    )}
                 </ExplorerPane>
             </Panel>
             <PaneResizeHandle />
