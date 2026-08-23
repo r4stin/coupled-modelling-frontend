@@ -1,0 +1,49 @@
+{
+    "name": "coupled-modelling-frontend",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "test": "vitest",
+        "test:ci": "vitest run",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "type-check": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@heroui/react": "^3.2.4",
+        "@heroui/styles": "^3.2.4",
+        "classnames": "^2.5.1",
+        "ky": "^1.14.3",
+        "next": "16.3",
+        "next-themes": "^0.4.6",
+        "nuqs": "^2.8.9",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "react-resizable-panels": "^3",
+        "swr": "^2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9",
+        "@tailwindcss/postcss": "^4.3.0",
+        "@testing-library/jest-dom": "^6",
+        "@testing-library/react": "^16",
+        "@types/node": "^24",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "@vitejs/plugin-react": "^5",
+        "eslint": "^9",
+        "eslint-config-next": "16.3",
+        "eslint-config-prettier": "^10",
+        "eslint-plugin-no-relative-import-paths": "^1",
+        "eslint-plugin-simple-import-sort": "^12",
+        "jsdom": "^26",
+        "prettier": "^3",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8",
+        "vitest": "^3"
+    }
+}

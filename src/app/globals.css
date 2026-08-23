@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+@import '@heroui/styles';
+
+/*
+ * Project design tokens. Keep custom colors minimal — prefer HeroUI semantic
+ * colors so light/dark theming works without per-component overrides
+ * (same approach as orkg-frontend/src/app/globals.css).
+ */
+@theme {
+    --max-width-container: 1320px;
+}
