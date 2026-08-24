@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-import HealthBadge from '@/components/Layout/HealthBadge';
+import HealthIndicator from '@/components/Layout/HealthIndicator';
 import ThemeToggle from '@/components/Layout/ThemeToggle';
 import { APP_DESCRIPTION, APP_TITLE } from '@/constants/app';
 
@@ -9,7 +9,7 @@ const Header: FC = () => (
         <h1 className="shrink-0 text-base font-bold text-foreground">{APP_TITLE}</h1>
         <p className="hidden min-w-0 truncate text-xs text-muted lg:block">{APP_DESCRIPTION}</p>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-            <HealthBadge />
+            <HealthIndicator />
             <ThemeToggle />
         </div>
     </header>
