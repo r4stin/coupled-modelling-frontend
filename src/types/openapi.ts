@@ -681,6 +681,29 @@ export interface components {
             /** @description Preferred label, falling back to the local name. */
             label: string;
         };
+        /** @description Targets an object-property triple pointing at the referenced instance. */
+        ObjectValueTarget: {
+            /** @constant */
+            kind: "object";
+            /** @description Identifier of the linked instance the triple points at. */
+            id: string;
+        };
+        /** @description Targets a literal triple; the datatype and language tag drive term serialization. */
+        LiteralValueTarget: {
+            /** @constant */
+            kind: "literal";
+            value: components["schemas"]["ScalarValue"];
+            /**
+             * @description XSD datatype IRI of the literal (defaults to plain string serialization).
+             * @example http://www.w3.org/2001/XMLSchema#integer
+             */
+            datatype?: string;
+            /**
+             * @description Language tag of the literal — required to match language-tagged triples ("value"@de).
+             * @example de
+             */
+            language?: string;
+        };
         ObjectPropertyValue: {
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -1187,7 +1210,8 @@ export interface operations {
                      * @example parallel_type
                      */
                     property: string;
-                    value: components["schemas"]["ScalarValue"];
+                    /** @description The value to delete. The typed forms delete the exact triple (correct datatype serialization); a bare scalar is matched by serialization guess. */
+                    value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"] | components["schemas"]["ScalarValue"];
                 };
             };
         };

@@ -3,16 +3,20 @@ import { HTTPError } from 'ky';
 import { describe, expect, it, vi } from 'vitest';
 
 import InstanceInspector from '@/components/InstanceInspector/InstanceInspector';
-import { getInstancePropertyMetadata } from '@/services/backend/instances';
+import { deleteInstance, deleteValue, getInstancePropertyMetadata } from '@/services/backend/instances';
 import { render, screen } from '@/testUtils';
 import { InstancePropertyMetadata } from '@/types/backend';
 
 vi.mock('@/services/backend/instances', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/backend/instances')>()),
     getInstancePropertyMetadata: vi.fn(),
+    deleteValue: vi.fn(),
+    deleteInstance: vi.fn(),
 }));
 
 const mockMetadata = vi.mocked(getInstancePropertyMetadata);
+const mockDeleteValue = vi.mocked(deleteValue);
+const mockDeleteInstance = vi.mocked(deleteInstance);
 
 const metadata: InstancePropertyMetadata = {
     id: 'instance_1',
@@ -103,5 +107,72 @@ describe('InstanceInspector', () => {
         mockMetadata.mockRejectedValue(new Error('network down'));
         render(<InstanceInspector instanceId="instance_1" />);
         expect(await screen.findByText('Could not load the instance details')).toBeInTheDocument();
+    });
+
+    it('deletes a literal value after confirmation with the exact typed payload', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeleteValue.mockResolvedValue(undefined as never);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete echo_level value 1' }));
+        expect(await screen.findByText('Are you sure you want to delete echo_level "1"?')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'echo_level', {
+            kind: 'literal',
+            value: 1,
+            datatype: 'http://www.w3.org/2001/XMLSchema#integer',
+        });
+    });
+
+    it('deletes an object value with the object-target payload', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeleteValue.mockResolvedValue(undefined as never);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'data', { kind: 'object', id: 'instance_9' });
+    });
+
+    it('includes the language tag when deleting a language-tagged literal', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeleteValue.mockResolvedValue(undefined as never);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete comment value Ein Löser' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'comment', {
+            kind: 'literal',
+            value: 'Ein Löser',
+            datatype: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString',
+            language: 'de',
+        });
+    });
+
+    it('does not delete when the confirmation is cancelled', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete echo_level value 1' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        expect(mockDeleteValue).not.toHaveBeenCalled();
+    });
+
+    it('deletes the instance after confirmation and clears the selection', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeleteInstance.mockResolvedValue(undefined as never);
+        const onUrlUpdate = vi.fn();
+        render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\)/)).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(mockDeleteInstance).toHaveBeenCalledWith('instance_1');
+        expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get('instance')).toBeNull();
+    });
+
+    it('keeps the dialog open and reports the backend error when deletion fails', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeleteInstance.mockRejectedValue(new Error('GraphDB unavailable'));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        // The dialog stays open for a retry; no navigation happened.
+        expect(await screen.findByRole('button', { name: 'Delete' })).toBeInTheDocument();
     });
 });

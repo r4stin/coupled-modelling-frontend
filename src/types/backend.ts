@@ -26,5 +26,7 @@ export type InstancePropertyGroup = components['schemas']['InstancePropertyGroup
 export type ObjectPropertyValue = components['schemas']['ObjectPropertyValue'];
 export type LiteralPropertyValue = components['schemas']['LiteralPropertyValue'];
 
+export type DeleteValueTarget = components['schemas']['ObjectValueTarget'] | components['schemas']['LiteralValueTarget'];
+
 export type InstanceId = components['schemas']['InstanceId'];
 export type PropertyDataMap = components['schemas']['PropertyDataMap'];

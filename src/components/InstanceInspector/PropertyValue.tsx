@@ -3,7 +3,8 @@
 import { Chip } from '@heroui/react';
 import { FC } from 'react';
 
-import { hasDistinctLabel, navLinkClass } from '@/lib/styles';
+import { navLinkClass } from '@/lib/styles';
+import { valueDisplayLabel } from '@/lib/valueDisplay';
 import { InstancePropertyGroup } from '@/types/backend';
 
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string';
@@ -21,7 +22,7 @@ const PropertyValue: FC<Props> = ({ value, onNavigate }) => {
     if (value.kind === 'object') {
         return (
             <button type="button" className={navLinkClass} title={`Navigate to ${value.id}`} onClick={() => onNavigate(value.id)}>
-                {hasDistinctLabel(value.label, value.id) ? `${value.label} (${value.id})` : value.id}
+                {valueDisplayLabel(value)}
             </button>
         );
     }
