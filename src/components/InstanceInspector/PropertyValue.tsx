@@ -14,14 +14,15 @@ const datatypeShortName = (datatype: string) => datatype.split(/[#/]/).pop() || 
 
 type Props = {
     value: InstancePropertyGroup['values'][number];
-    onNavigate: (id: string) => void;
+    /** Required for object values (they render as navigation links); literals never navigate. */
+    onNavigate?: (id: string) => void;
 };
 
 /** One property value: a navigable link for object values, value + datatype/language badge for literals. */
 const PropertyValue: FC<Props> = ({ value, onNavigate }) => {
     if (value.kind === 'object') {
         return (
-            <button type="button" className={navLinkClass} title={`Navigate to ${value.id}`} onClick={() => onNavigate(value.id)}>
+            <button type="button" className={navLinkClass} title={`Navigate to ${value.id}`} onClick={() => onNavigate?.(value.id)}>
                 {valueDisplayLabel(value)}
             </button>
         );

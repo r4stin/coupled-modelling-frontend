@@ -8,14 +8,16 @@ import useSWR from 'swr';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
 import Icon from '@/components/Icons/Icon';
+import EditableLiteralValue from '@/components/InstanceInspector/EditableLiteralValue';
 import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { toDeleteTarget } from '@/lib/deleteTargets';
 import { hasDistinctLabel } from '@/lib/styles';
 import { useExplorerRefresh } from '@/lib/useExplorerRefresh';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
 import { valueDisplayLabel } from '@/lib/valueDisplay';
 import { deleteInstance, deleteValue, getInstancePropertyMetadata, instancesUrl } from '@/services/backend/instances';
-import { DeleteValueTarget, InstancePropertyGroup } from '@/types/backend';
+import { InstancePropertyGroup } from '@/types/backend';
 
 type Props = {
     /** Identifier of the instance to inspect. */
@@ -29,18 +31,14 @@ type PendingDelete = ({ type: 'value'; property: string; value: PropertyValueIte
 /** The backend answers 400 for an unknown instance id (e.g. deleted, or a stale URL). */
 const isNotFound = (error: unknown) => error instanceof HTTPError && (error.response.status === 400 || error.response.status === 404);
 
-/** The exact-triple target the delete endpoint needs, language tag included. */
-const toDeleteTarget = (value: PropertyValueItem): DeleteValueTarget =>
-    value.kind === 'object'
-        ? { kind: 'object', id: value.id }
-        : { kind: 'literal', value: value.value, datatype: value.datatype, ...(value.language ? { language: value.language } : {}) };
-
 /** Instance details: label, id, types, and all direct properties with navigable object links and per-value deletion. */
 const InstanceInspector = ({ instanceId }: Props) => {
     const { data, error, isLoading } = useSWR([instancesUrl, instanceId], () => getInstancePropertyMetadata(instanceId));
     const { selectedClass, selectInstance, alignClassWithInstanceTypes } = useExplorerSelection();
     const { refreshInstance, purgeInstance, refreshClassInstances } = useExplorerRefresh();
     const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+    // Row currently in inline-edit mode; its delete affordance is hidden meanwhile.
+    const [editingKey, setEditingKey] = useState<string | null>(null);
 
     // Inspector-link navigation can land on an instance of another class; once its types are
     // known, re-target the class so all three panes stay consistent. The URL is an external
@@ -56,6 +54,11 @@ const InstanceInspector = ({ instanceId }: Props) => {
     const notFound = isNotFound(error);
 
     const instanceDisplay = data && hasDistinctLabel(data.label, data.id) ? `"${data.label}" (${data.id})` : `"${instanceId}"`;
+
+    const handleValueMutated = () => {
+        refreshClassInstances([...(data?.types ?? []), ...(selectedClass ? [selectedClass] : [])]).catch(() => undefined);
+        return refreshInstance(instanceId).catch(() => undefined);
+    };
 
     const dialogContent =
         pendingDelete === null
@@ -146,24 +149,43 @@ const InstanceInspector = ({ instanceId }: Props) => {
                                             <div className="space-y-1">
                                                 {group.values.map((value, index) => (
                                                     <div key={index} className="flex items-start justify-between gap-2">
-                                                        <PropertyValue value={value} onNavigate={selectInstance} />
-                                                        <button
-                                                            type="button"
-                                                            aria-label={`Delete ${group.property} value ${valueDisplayLabel(value)}`}
-                                                            title="Delete this value"
-                                                            className="-my-1 flex size-7 shrink-0 items-center justify-center rounded text-muted hover:bg-danger-soft hover:text-danger"
-                                                            onClick={() =>
-                                                                setPendingDelete({ type: 'value', property: group.property, value, deleting: false })
-                                                            }
-                                                        >
-                                                            <Icon className="size-5">
-                                                                <path
-                                                                    d="M3 6h18M8 6V4h8v2m1 0-1 14H8L7 6m3 4v7m4-7v7"
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                />
-                                                            </Icon>
-                                                        </button>
+                                                        {value.kind === 'literal' ? (
+                                                            <EditableLiteralValue
+                                                                instanceId={instanceId}
+                                                                property={group.property}
+                                                                value={value}
+                                                                onSaved={handleValueMutated}
+                                                                onEditingChange={(editing) =>
+                                                                    setEditingKey(editing ? `${group.property}:${index}` : null)
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <PropertyValue value={value} onNavigate={selectInstance} />
+                                                        )}
+                                                        {editingKey !== `${group.property}:${index}` && (
+                                                            <button
+                                                                type="button"
+                                                                aria-label={`Delete ${group.property} value ${valueDisplayLabel(value)}`}
+                                                                title="Delete this value"
+                                                                className="-my-1 flex size-7 shrink-0 items-center justify-center rounded text-muted hover:bg-danger-soft hover:text-danger"
+                                                                onClick={() =>
+                                                                    setPendingDelete({
+                                                                        type: 'value',
+                                                                        property: group.property,
+                                                                        value,
+                                                                        deleting: false,
+                                                                    })
+                                                                }
+                                                            >
+                                                                <Icon className="size-5">
+                                                                    <path
+                                                                        d="M3 6h18M8 6V4h8v2m1 0-1 14H8L7 6m3 4v7m4-7v7"
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                    />
+                                                                </Icon>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

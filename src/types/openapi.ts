@@ -252,6 +252,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/replace_value/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Atomically replace one specific property value (direct SPARQL)
+         * @description Replaces one stored value with another in a single SPARQL update. The old value is matched by value equality (dangling references allowed); the new value keeps its exact datatype and language tag. When the old value no longer exists, the update is a no-op.
+         */
+        post: operations["replaceValue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/delete_value/": {
         parameters: {
             query?: never;
@@ -1186,6 +1206,34 @@ export interface operations {
             cookie?: never;
         };
         requestBody: components["requestBodies"]["InstanceDataBody"];
+        responses: {
+            201: components["responses"]["EmptyCreated"];
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["UnexpectedError"];
+            503: components["responses"]["GraphDBUnavailable"];
+        };
+    };
+    replaceValue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Instance identifier. */
+                    instance: string;
+                    /** @description Property name (without the `has_` prefix). */
+                    property: string;
+                    /** @description The currently stored value to replace. */
+                    old_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
+                    /** @description The replacement value. */
+                    new_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
+                };
+            };
+        };
         responses: {
             201: components["responses"]["EmptyCreated"];
             400: components["responses"]["BadRequest"];
