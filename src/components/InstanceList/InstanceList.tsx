@@ -1,7 +1,7 @@
 'use client';
 
 import { SearchField } from '@heroui/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
@@ -20,8 +20,8 @@ const InstanceList = ({ classId }: Props) => {
     const { selectedInstance, selectInstance } = useExplorerSelection();
     const [query, setQuery] = useState('');
 
-    const instances = data ?? [];
-    const groups = groupInstancesByType(filterInstances(instances, query, classId), classId);
+    // The list re-renders on every selection change; skip regrouping when inputs are unchanged.
+    const groups = useMemo(() => groupInstancesByType(filterInstances(data ?? [], query, classId), classId), [data, query, classId]);
 
     return (
         <PaneStateBoundary
@@ -29,10 +29,10 @@ const InstanceList = ({ classId }: Props) => {
             loadingLabel="Loading instances"
             hasError={Boolean(error) && !data}
             errorTitle="Could not load the instances"
-            isEmpty={instances.length === 0}
+            isEmpty={(data ?? []).length === 0}
             emptyMessage="No instances found for this class."
         >
-            <div className="flex h-full flex-col gap-2">
+            <div className="space-y-2">
                 <SearchField aria-label="Filter instances" value={query} onChange={setQuery} fullWidth>
                     <SearchField.Group>
                         <SearchField.SearchIcon />
@@ -43,7 +43,7 @@ const InstanceList = ({ classId }: Props) => {
                 {groups.length === 0 ? (
                     <p className="p-4 text-center text-sm text-muted">No instances match the filter.</p>
                 ) : (
-                    <div className="min-h-0 flex-1 overflow-y-auto">
+                    <div>
                         {groups.map((group) => (
                             <section key={group.type} aria-label={group.type}>
                                 <h3 className="sticky top-0 bg-background px-2 py-1 text-xs font-semibold tracking-wide text-muted uppercase">

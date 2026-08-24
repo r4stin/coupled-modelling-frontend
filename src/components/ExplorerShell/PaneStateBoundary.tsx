@@ -18,7 +18,7 @@ type Props = {
 const PaneStateBoundary: FC<Props> = ({ isLoading, loadingLabel, hasError, errorTitle, isEmpty, emptyMessage, children }) => {
     if (isLoading) {
         return (
-            <div className="flex h-full items-center justify-center" role="status" aria-label={loadingLabel}>
+            <div className="flex items-center justify-center py-10" role="status" aria-label={loadingLabel}>
                 <Spinner size="sm" />
             </div>
         );

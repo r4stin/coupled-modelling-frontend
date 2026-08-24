@@ -3,11 +3,11 @@ import { ClassHierarchyMetadata, ClassInstanceSummary, ClassMetadata } from '@/t
 
 export const classesUrl = 'get_class_hierarchy_metadata/';
 export const classInstanceSummariesUrl = 'get_class_instance_summaries/';
+export const classMetadataUrl = 'get_class_metadata/';
 
 export const getClassHierarchyMetadata = () => backendApi.get(classesUrl).json<ClassHierarchyMetadata>();
 
 export const getClassInstanceSummaries = (className: string) =>
     backendApi.get(classInstanceSummariesUrl, { searchParams: { class: className } }).json<ClassInstanceSummary[]>();
 
-export const getClassMetadata = (className: string) =>
-    backendApi.get('get_class_metadata/', { searchParams: { class: className } }).json<ClassMetadata>();
+export const getClassMetadata = (className: string) => backendApi.get(classMetadataUrl, { searchParams: { class: className } }).json<ClassMetadata>();

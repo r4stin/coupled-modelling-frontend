@@ -2,6 +2,7 @@
 
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
+import ClassInspector from '@/components/ClassInspector/ClassInspector';
 import ClassTree from '@/components/ClassTree/ClassTree';
 import ExplorerPane from '@/components/ExplorerShell/ExplorerPane';
 import InstanceList from '@/components/InstanceList/InstanceList';
@@ -32,7 +33,12 @@ const ExplorerShell = () => {
             <Panel defaultSize={38} minSize={20}>
                 <ExplorerPane title={instancesTitle}>
                     {selectedClass ? (
-                        <InstanceList key={selectedClass} classId={selectedClass} />
+                        // Natural heights inside ExplorerPane's single scroll region: a tall
+                        // metadata card scrolls away instead of squeezing the list out.
+                        <div className="space-y-2">
+                            <ClassInspector classId={selectedClass} />
+                            <InstanceList key={selectedClass} classId={selectedClass} />
+                        </div>
                     ) : (
                         <PanePlaceholder>Select a class to list its instances.</PanePlaceholder>
                     )}

@@ -27,6 +27,18 @@ const ClassTree = () => {
         return new Set(findPathsToClass(tree, selectedClass).flatMap((path) => path.map((_, index) => path.slice(0, index + 1).join('/'))));
     }, [tree, selectedClass]);
 
+    // When the selection changes from any surface (tree click, inspector link, URL),
+    // drop manual collapses that would hide the newly selected class. Render-phase
+    // state adjustment per React's derived-state pattern — no effect needed.
+    const [prevSelected, setPrevSelected] = useState(selectedClass);
+    if (selectedClass !== prevSelected) {
+        setPrevSelected(selectedClass);
+        setOverrides((current) => {
+            const next = new Map([...current].filter(([path, expanded]) => expanded || !autoExpanded.has(path)));
+            return next.size === current.size ? current : next;
+        });
+    }
+
     const isExpanded = (path: string) => overrides.get(path) ?? autoExpanded.has(path);
 
     const toggleExpanded = (path: string) => setOverrides((current) => new Map(current).set(path, !isExpanded(path)));
