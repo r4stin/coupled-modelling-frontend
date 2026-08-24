@@ -2,7 +2,7 @@
 
 import { Chip } from '@heroui/react';
 import { HTTPError } from 'ky';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import useSWR from 'swr';
 
 import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
@@ -23,15 +23,15 @@ const InstanceInspector = ({ instanceId }: Props) => {
     const { data, error, isLoading } = useSWR([instancesUrl, instanceId], () => getInstancePropertyMetadata(instanceId));
     const { selectedClass, selectInstance, alignClassWithInstanceTypes } = useExplorerSelection();
 
-    // Inspector-link navigation can land on an instance of another class; once its types
-    // are known, re-target the class so all three panes stay consistent (render-phase adjustment).
-    const [alignedFor, setAlignedFor] = useState<string>();
-    if (data && data.id === instanceId && alignedFor !== instanceId) {
-        setAlignedFor(instanceId);
-        if (selectedClass && !data.types.includes(selectedClass)) {
+    // Inspector-link navigation can land on an instance of another class; once its types are
+    // known, re-target the class so all three panes stay consistent. The URL is an external
+    // store shared with the other panes, so this sync belongs in an effect, not in render.
+    useEffect(() => {
+        if (data && data.id === instanceId && selectedClass && !data.types.includes(selectedClass)) {
             alignClassWithInstanceTypes(data.types);
         }
-    }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- align* is recreated per render; data/class identify the sync
+    }, [data, instanceId, selectedClass]);
 
     // A definitive not-found (deleted instance, stale URL) wins over any cached data.
     const notFound = isNotFound(error);
