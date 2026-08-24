@@ -1,15 +1,13 @@
 'use client';
 
-import { linkVariants } from '@heroui/react';
 import { FC, Fragment } from 'react';
 
+import { navLinkClass } from '@/lib/styles';
 import { NamedReference } from '@/types/backend';
-
-const linkClass = linkVariants().base();
 
 /** Clickable class reference; navigation is injected so links stay purely presentational. */
 export const ClassNavLink: FC<{ target: NamedReference; onNavigate: (id: string) => void }> = ({ target, onNavigate }) => (
-    <button type="button" className={linkClass} onClick={() => onNavigate(target.id)}>
+    <button type="button" className={navLinkClass} onClick={() => onNavigate(target.id)}>
         {target.label}
     </button>
 );

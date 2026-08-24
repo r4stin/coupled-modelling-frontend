@@ -686,7 +686,7 @@ export interface components {
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            kind: "ObjectPropertyValue";
+            kind: "object";
             /** @description Identifier of the linked instance. */
             id: string;
             /** @description Preferred label of the linked instance. */
@@ -697,7 +697,7 @@ export interface components {
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            kind: "LiteralPropertyValue";
+            kind: "literal";
             value: components["schemas"]["ScalarValue"];
             /**
              * @description XSD datatype IRI of the literal.

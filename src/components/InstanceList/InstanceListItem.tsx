@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 
-import { selectableRowClass } from '@/lib/styles';
+import { hasDistinctLabel, selectableRowClass } from '@/lib/styles';
 import { ClassInstanceSummary } from '@/types/backend';
 
 type Props = {
@@ -20,7 +20,7 @@ const InstanceListItem = ({ instance, isSelected, onSelect }: Props) => (
             onClick={() => onSelect(instance.id)}
         >
             <span className="text-sm">{instance.label}</span>
-            {instance.label !== instance.id && <span className="ml-1 text-xs text-muted">({instance.id})</span>}
+            {hasDistinctLabel(instance.label, instance.id) && <span className="ml-1 text-xs text-muted">({instance.id})</span>}
             {instance.property_preview.length > 0 && (
                 <span className="mt-0.5 block truncate text-xs text-muted">
                     {instance.property_preview.map((preview, index) => (

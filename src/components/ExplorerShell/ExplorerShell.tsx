@@ -5,6 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import ClassInspector from '@/components/ClassInspector/ClassInspector';
 import ClassTree from '@/components/ClassTree/ClassTree';
 import ExplorerPane from '@/components/ExplorerShell/ExplorerPane';
+import InstanceInspector from '@/components/InstanceInspector/InstanceInspector';
 import InstanceList from '@/components/InstanceList/InstanceList';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
 
@@ -19,7 +20,7 @@ const PanePlaceholder = ({ children }: { children: string }) => (
 );
 
 const ExplorerShell = () => {
-    const { selectedClass } = useExplorerSelection();
+    const { selectedClass, selectedInstance } = useExplorerSelection();
     const instancesTitle = selectedClass ? `Instances · ${selectedClass}` : 'Instances';
 
     return (
@@ -47,7 +48,11 @@ const ExplorerShell = () => {
             <PaneResizeHandle />
             <Panel defaultSize={40} minSize={20}>
                 <ExplorerPane title="Instance Inspector">
-                    <PanePlaceholder>Select an instance to view its properties.</PanePlaceholder>
+                    {selectedInstance ? (
+                        <InstanceInspector instanceId={selectedInstance} />
+                    ) : (
+                        <PanePlaceholder>Select an instance to view its properties.</PanePlaceholder>
+                    )}
                 </ExplorerPane>
             </Panel>
         </PanelGroup>

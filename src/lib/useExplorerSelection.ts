@@ -19,5 +19,16 @@ export const useExplorerSelection = () => {
         }
     };
 
-    return { selectedClass, selectClass, selectedInstance, selectInstance: setSelectedInstance };
+    /**
+     * Re-establishes the invariant from the instance side: when the inspected instance
+     * does not belong to the selected class (inspector link navigation), re-target the
+     * class to the instance's first type, keeping the instance selected.
+     */
+    const alignClassWithInstanceTypes = (types: string[]) => {
+        if (types.length > 0 && (!selectedClass || !types.includes(selectedClass))) {
+            setSelectedClass(types[0]);
+        }
+    };
+
+    return { selectedClass, selectClass, selectedInstance, selectInstance: setSelectedInstance, alignClassWithInstanceTypes };
 };
