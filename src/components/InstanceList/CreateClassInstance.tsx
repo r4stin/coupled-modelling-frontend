@@ -48,6 +48,7 @@ const CreateClassInstance: FC<Props> = ({ classId }) => {
                 onClose={close}
             >
                 <LabelledInput
+                    autoFocus
                     id="create-instance-label-input"
                     label="Instance label"
                     placeholder="e.g. Airfoil fluid solver"

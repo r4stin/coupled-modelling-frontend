@@ -13,15 +13,26 @@ type Props = {
     value: string;
     onChange: (id: string) => void;
     isDisabled?: boolean;
+    fullWidth?: boolean;
     className?: string;
 };
 
 /** Single-choice dropdown over a fixed option list. */
-const OptionSelect: FC<Props> = ({ 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, options, value, onChange, isDisabled, className }) => (
+const OptionSelect: FC<Props> = ({
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    options,
+    value,
+    onChange,
+    isDisabled,
+    fullWidth,
+    className,
+}) => (
     <Select
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         className={className}
+        fullWidth={fullWidth}
         isDisabled={isDisabled}
         value={value}
         onChange={(key) => key !== null && onChange(String(key))}

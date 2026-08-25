@@ -43,10 +43,13 @@ const AddChildDialog: FC<Props> = ({ isOpen, parentId, onCreated, onClose }) => 
             onSubmit={submit}
             onClose={close}
         >
-            <div className="space-y-1">
-                <Label id="add-child-property-label">Property (and target class)</Label>
+            <div className="space-y-1.5">
+                <Label className="block" id="add-child-property-label">
+                    Property (and target class)
+                </Label>
                 <OptionSelect
                     aria-labelledby="add-child-property-label"
+                    fullWidth
                     options={CHILD_PROPERTY_OPTIONS}
                     value={property}
                     onChange={setProperty}
@@ -54,6 +57,7 @@ const AddChildDialog: FC<Props> = ({ isOpen, parentId, onCreated, onClose }) => 
                 />
             </div>
             <LabelledInput
+                autoFocus
                 id="add-child-label-input"
                 label="New instance label"
                 placeholder="e.g. MyConvergenceAccel"

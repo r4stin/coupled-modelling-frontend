@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Modal } from '@heroui/react';
-import { FC, FormEvent, ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 
 type Props = {
     isOpen: boolean;
@@ -18,11 +18,6 @@ type Props = {
 
 /** Modal dialog with form fields, submit-on-Enter, and Cancel/submit actions. */
 const FormDialog: FC<Props> = ({ isOpen, title, submitLabel, pendingLabel, isPending, onSubmit, onClose, children }) => {
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        onSubmit();
-    };
-
     return (
         <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && !isPending && onClose()}>
             <Modal.Container>
@@ -30,8 +25,13 @@ const FormDialog: FC<Props> = ({ isOpen, title, submitLabel, pendingLabel, isPen
                     <Modal.Header>
                         <Modal.Heading>{title}</Modal.Heading>
                     </Modal.Header>
-                    <form onSubmit={handleSubmit}>
-                        <Modal.Body className="space-y-3">{children}</Modal.Body>
+                    <form
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            onSubmit();
+                        }}
+                    >
+                        <Modal.Body className="space-y-4">{children}</Modal.Body>
                         <Modal.Footer>
                             <Button variant="ghost" isDisabled={isPending} onPress={onClose}>
                                 Cancel

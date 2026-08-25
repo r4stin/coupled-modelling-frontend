@@ -9,3 +9,21 @@
 @theme {
     --max-width-container: 1320px;
 }
+
+/*
+ * Form fields: HeroUI's default theme renders fields borderless, and in dark
+ * mode the field background is the same color as the dialog surface, leaving
+ * inputs and select triggers invisible until hovered. Give every field a
+ * resting border and lift the dark field background off the overlay surface.
+ */
+@layer base {
+    :root {
+        --field-border-width: 1px;
+        --field-border: var(--border);
+    }
+
+    .dark,
+    [data-theme='dark'] {
+        --field-background: var(--surface-secondary);
+    }
+}
