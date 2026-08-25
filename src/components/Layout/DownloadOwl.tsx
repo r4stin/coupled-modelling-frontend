@@ -3,6 +3,7 @@
 import { Button, toast } from '@heroui/react';
 import { FC, useState } from 'react';
 
+import Icon from '@/components/Icons/Icon';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { downloadBlob } from '@/lib/fileTransfer';
 import { downloadOwl } from '@/services/backend/ontology';
@@ -27,7 +28,10 @@ const DownloadOwl: FC = () => {
     };
 
     return (
-        <Button size="sm" variant="ghost" isDisabled={isDownloading} onPress={download}>
+        <Button size="sm" variant="outline" isDisabled={isDownloading} onPress={download}>
+            <Icon>
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+            </Icon>
             {isDownloading ? 'Downloading…' : 'Download OWL'}
         </Button>
     );

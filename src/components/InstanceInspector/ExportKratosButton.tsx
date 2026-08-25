@@ -3,6 +3,7 @@
 import { Button, toast } from '@heroui/react';
 import { FC, useMemo, useState } from 'react';
 
+import Icon from '@/components/Icons/Icon';
 import { COUPLED_SYSTEM_CLASS } from '@/constants/properties';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { buildParentsIndex, isSubclassOf } from '@/lib/classTree';
@@ -46,7 +47,10 @@ const ExportKratosButton: FC<Props> = ({ instanceId, types }) => {
     };
 
     return (
-        <Button size="sm" variant="ghost" isDisabled={isExporting} onPress={exportJson}>
+        <Button size="sm" variant="outline" isDisabled={isExporting} onPress={exportJson}>
+            <Icon>
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+            </Icon>
             {isExporting ? 'Exporting…' : 'Export JSON'}
         </Button>
     );

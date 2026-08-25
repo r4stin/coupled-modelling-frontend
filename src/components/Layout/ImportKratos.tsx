@@ -5,6 +5,7 @@ import { FC, useRef, useState } from 'react';
 
 import FormDialog from '@/components/FormDialog/FormDialog';
 import LabelledInput from '@/components/FormDialog/LabelledInput';
+import Icon from '@/components/Icons/Icon';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { readFileText } from '@/lib/fileTransfer';
 import { useExplorerRefresh } from '@/lib/useExplorerRefresh';
@@ -75,7 +76,10 @@ const ImportKratos: FC = () => {
 
     return (
         <>
-            <Button size="sm" variant="ghost" onPress={() => fileInputRef.current?.click()}>
+            <Button size="sm" variant="outline" onPress={() => fileInputRef.current?.click()}>
+                <Icon>
+                    <path d="M12 15V3m0 0 4 4m-4-4L8 7M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                </Icon>
                 Import
             </Button>
             <input
