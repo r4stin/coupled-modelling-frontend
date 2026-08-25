@@ -93,6 +93,36 @@ export const buildClassTree = (entries: ClassHierarchyEntry[]): ClassTreeNode[] 
     return tree.toSorted((a, b) => byName(a.name, b.name));
 };
 
+/** Class → parents lookup for ancestry queries; parents of duplicate rows are merged. */
+export const buildParentsIndex = (entries: ClassHierarchyEntry[]): Map<string, string[]> => {
+    const parentsOf = new Map<string, string[]>();
+    for (const entry of entries) {
+        const parents = parentsOf.get(entry.class);
+        if (parents) {
+            parents.push(...entry.parents);
+        } else {
+            parentsOf.set(entry.class, [...entry.parents]);
+        }
+    }
+    return parentsOf;
+};
+
+/** True when the class is the ancestor itself or reaches it through any parent chain (cycle-safe). */
+export const isSubclassOf = (parentsOf: Map<string, string[]>, className: string, ancestor: string): boolean => {
+    const visited = new Set<string>();
+    const queue = [className];
+    for (const current of queue) {
+        if (current === ancestor) {
+            return true;
+        }
+        if (!visited.has(current)) {
+            visited.add(current);
+            queue.push(...(parentsOf.get(current) ?? []));
+        }
+    }
+    return false;
+};
+
 /** Every path (root → … → occurrence) at which the given class appears in the tree. */
 export const findPathsToClass = (tree: ClassTreeNode[], name: string): string[][] => {
     const paths: string[][] = [];

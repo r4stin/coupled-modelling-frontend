@@ -14,6 +14,12 @@ vi.mock('@/services/backend/instances', async (importOriginal) => ({
     deleteInstance: vi.fn(),
 }));
 
+// The inspector renders ExportKratosButton, which fetches the class hierarchy.
+vi.mock('@/services/backend/classes', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/services/backend/classes')>()),
+    getClassHierarchyMetadata: vi.fn().mockResolvedValue([]),
+}));
+
 const mockMetadata = vi.mocked(getInstancePropertyMetadata);
 const mockDeleteValue = vi.mocked(deleteValue);
 const mockDeleteInstance = vi.mocked(deleteInstance);
@@ -87,6 +93,16 @@ describe('InstanceInspector', () => {
         const params = onUrlUpdate.mock.lastCall?.[0].searchParams;
         expect(params?.get('class')).toBe('meshes');
         expect(params?.get('instance')).toBe('instance_9');
+    });
+
+    it('selects the instance class when no class is selected (import, pasted URL)', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        const onUrlUpdate = vi.fn();
+        render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?instance=instance_1', onUrlUpdate });
+        await screen.findByRole('heading', { name: 'Fluid solver' });
+        const params = onUrlUpdate.mock.lastCall?.[0].searchParams;
+        expect(params?.get('class')).toBe('solvers');
+        expect(params?.get('instance')).toBe('instance_1');
     });
 
     it('keeps the class when the inspected instance belongs to it', async () => {

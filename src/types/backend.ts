@@ -31,3 +31,4 @@ export type DeleteValueTarget = components['schemas']['ObjectValueTarget'] | com
 
 export type InstanceId = components['schemas']['InstanceId'];
 export type PropertyDataMap = components['schemas']['PropertyDataMap'];
+export type KratosParameters = components['schemas']['KratosParameters'];

@@ -20,5 +20,7 @@ export const useExplorerRefresh = () => {
         /** Refresh the instance lists of the given classes (previews change with value mutations). */
         refreshClassInstances: (classIds: string[]) =>
             Promise.all([...new Set(classIds)].map((classId) => mutate([classInstanceSummariesUrl, classId]))),
+        /** Revalidate every cached backend resource (a Kratos import can touch any class, metadata, or instance). */
+        refreshEverything: () => mutate(() => true),
     };
 };

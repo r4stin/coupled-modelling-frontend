@@ -11,6 +11,7 @@ import Icon from '@/components/Icons/Icon';
 import AddChildDialog from '@/components/InstanceInspector/AddChildDialog';
 import AddValueForm from '@/components/InstanceInspector/AddValueForm';
 import EditableLiteralValue from '@/components/InstanceInspector/EditableLiteralValue';
+import ExportKratosButton from '@/components/InstanceInspector/ExportKratosButton';
 import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { toDeleteTarget } from '@/lib/deleteTargets';
@@ -43,11 +44,12 @@ const InstanceInspector = ({ instanceId }: Props) => {
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isAddChildOpen, setIsAddChildOpen] = useState(false);
 
-    // Inspector-link navigation can land on an instance of another class; once its types are
-    // known, re-target the class so all three panes stay consistent. The URL is an external
+    // Navigation can land on an instance of another class (inspector links) or with no
+    // class at all (an import, a pasted ?instance= URL); once the types are known,
+    // re-target the class so all three panes stay consistent. The URL is an external
     // store shared with the other panes, so this sync belongs in an effect, not in render.
     useEffect(() => {
-        if (data && data.id === instanceId && selectedClass && !data.types.includes(selectedClass)) {
+        if (data && data.id === instanceId && (!selectedClass || !data.types.includes(selectedClass))) {
             alignClassWithInstanceTypes(data.types);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- align* is recreated per render; data/class identify the sync
@@ -119,6 +121,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
                         <div className="flex items-start justify-between gap-2">
                             <h3 className="text-sm font-bold break-all">{data.label}</h3>
                             <div className="flex shrink-0 gap-1.5">
+                                <ExportKratosButton instanceId={instanceId} types={data.types} />
                                 <Button size="sm" variant="primary" onPress={() => setIsAddChildOpen(true)}>
                                     Add child
                                 </Button>

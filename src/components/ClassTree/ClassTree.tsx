@@ -1,16 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import useSWR from 'swr';
 
 import ClassTreeNodeItem from '@/components/ClassTree/ClassTreeNodeItem';
 import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
 import { buildClassTree, findPathsToClass } from '@/lib/classTree';
+import { useClassHierarchy } from '@/lib/useClassHierarchy';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
-import { classesUrl, getClassHierarchyMetadata } from '@/services/backend/classes';
 
 const ClassTree = () => {
-    const { data, error, isLoading } = useSWR(classesUrl, getClassHierarchyMetadata);
+    const { data, error, isLoading } = useClassHierarchy();
     const { selectedClass, selectClass } = useExplorerSelection();
     // Explicit user choices per node path; anything else falls back to auto-expansion.
     const [overrides, setOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());

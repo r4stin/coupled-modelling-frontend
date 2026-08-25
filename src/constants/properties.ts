@@ -1,10 +1,13 @@
 /**
- * Property choices offered by the explorer's creation forms, curated to the
- * coupled-simulation ontology vocabulary.
+ * Ontology vocabulary used by the explorer's creation and file workflows:
+ * curated property choices for the forms and well-known class names.
  */
 import { ValueTypeId } from '@/lib/literalParsing';
 
 export type PropertyOption = { id: string; label: string };
+
+/** Root class of Kratos co-simulation configurations. */
+export const COUPLED_SYSTEM_CLASS = 'coupled_system';
 
 /** Properties offered when appending a value to an existing instance. */
 export const VALUE_PROPERTY_OPTIONS: PropertyOption[] = [

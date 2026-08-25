@@ -27,9 +27,9 @@ const RootLayout: FC<Props> = ({ children }) => {
             <body className="flex h-dvh flex-col bg-background text-foreground">
                 <NuqsAdapter>
                     <Providers>
-                        <Header />
                         {/* NuqsAdapter makes descendants read useSearchParams, which requires a
-                            Suspense boundary during prerender — kept here so every route is covered. */}
+                            Suspense boundary during prerender — the Header reads the URL
+                            selection too, so it lives inside the boundary with the routes. */}
                         <Suspense
                             fallback={
                                 <div className="flex flex-1 items-center justify-center">
@@ -37,6 +37,7 @@ const RootLayout: FC<Props> = ({ children }) => {
                                 </div>
                             }
                         >
+                            <Header />
                             {children}
                         </Suspense>
                     </Providers>

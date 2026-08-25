@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildClassTree, findPathsToClass } from '@/lib/classTree';
+import { buildClassTree, buildParentsIndex, findPathsToClass, isSubclassOf } from '@/lib/classTree';
 
 describe('buildClassTree', () => {
     it('nests classes under their parents and sorts alphabetically', () => {
@@ -87,5 +87,44 @@ describe('findPathsToClass', () => {
             ['b', 'shared'],
         ]);
         expect(findPathsToClass(tree, 'missing')).toEqual([]);
+    });
+});
+
+describe('isSubclassOf', () => {
+    const parentsOf = buildParentsIndex([
+        { class: 'coupled_system', parents: [] },
+        { class: 'fsi_system', parents: ['coupled_system'] },
+        { class: 'special_fsi', parents: ['fsi_system'] },
+        { class: 'solvers', parents: [] },
+    ]);
+
+    it('accepts the ancestor itself and transitive descendants', () => {
+        expect(isSubclassOf(parentsOf, 'coupled_system', 'coupled_system')).toBe(true);
+        expect(isSubclassOf(parentsOf, 'fsi_system', 'coupled_system')).toBe(true);
+        expect(isSubclassOf(parentsOf, 'special_fsi', 'coupled_system')).toBe(true);
+    });
+
+    it('rejects unrelated and unknown classes', () => {
+        expect(isSubclassOf(parentsOf, 'solvers', 'coupled_system')).toBe(false);
+        expect(isSubclassOf(parentsOf, 'unknown', 'coupled_system')).toBe(false);
+        expect(isSubclassOf(parentsOf, 'coupled_system', 'fsi_system')).toBe(false);
+    });
+
+    it('merges the parents of duplicate hierarchy rows', () => {
+        const duplicated = buildParentsIndex([
+            { class: 'fsi_system', parents: ['coupled_system'] },
+            { class: 'fsi_system', parents: ['solvers'] },
+            { class: 'coupled_system', parents: [] },
+        ]);
+        expect(isSubclassOf(duplicated, 'fsi_system', 'coupled_system')).toBe(true);
+        expect(isSubclassOf(duplicated, 'fsi_system', 'solvers')).toBe(true);
+    });
+
+    it('terminates on parent cycles', () => {
+        const cyclic = buildParentsIndex([
+            { class: 'a', parents: ['b'] },
+            { class: 'b', parents: ['a'] },
+        ]);
+        expect(isSubclassOf(cyclic, 'a', 'coupled_system')).toBe(false);
     });
 });

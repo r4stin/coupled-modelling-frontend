@@ -19,6 +19,8 @@ describe('Header', () => {
         render(<Header />);
         expect(screen.getByRole('heading', { name: APP_TITLE })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /switch to (dark|light) theme/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Download OWL' })).toBeInTheDocument();
         expect(await screen.findByRole('button', { name: 'GraphDB connected · coupled_modelling' })).toBeInTheDocument();
     });
 });
