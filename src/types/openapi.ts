@@ -200,6 +200,10 @@ export interface paths {
          * Add property values to an instance (direct SPARQL)
          * @description Inserts the given property values for an existing instance in a single
          *     SPARQL update transaction. List values produce one triple per element.
+         *     Plain string values are kept as literals for datatype properties; for
+         *     object properties they are resolved to an existing instance of the
+         *     property's class by label, or a new labeled instance is created when no
+         *     match exists. Explicit `instance*` references must already exist.
          */
         post: operations["addValues"];
         delete?: never;
@@ -648,11 +652,13 @@ export interface components {
         /**
          * @description Property-name to value(s) mapping. Keys are property names without the
          *     `has_` prefix (plus `label` for `rdfs:label`). Values are scalars or
-         *     arrays of scalars; strings matching the label of an existing instance
-         *     of the property's class are resolved to object references.
+         *     arrays of scalars. Whether plain strings on object properties are
+         *     label-resolved to object references is documented per endpoint; the
+         *     replace endpoints accept only non-string literals (numbers, booleans),
+         *     `label` strings, and explicit `instance*` references.
          * @example {
-         *       "parallel_type": "OpenMP",
-         *       "echo_level": 1
+         *       "echo_level": 1,
+         *       "print_colors": false
          *     }
          */
         PropertyDataMap: {

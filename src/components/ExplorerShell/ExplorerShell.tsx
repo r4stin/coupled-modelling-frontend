@@ -6,6 +6,7 @@ import ClassInspector from '@/components/ClassInspector/ClassInspector';
 import ClassTree from '@/components/ClassTree/ClassTree';
 import ExplorerPane from '@/components/ExplorerShell/ExplorerPane';
 import InstanceInspector from '@/components/InstanceInspector/InstanceInspector';
+import CreateClassInstance from '@/components/InstanceList/CreateClassInstance';
 import InstanceList from '@/components/InstanceList/InstanceList';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
 
@@ -32,7 +33,7 @@ const ExplorerShell = () => {
             </Panel>
             <PaneResizeHandle />
             <Panel defaultSize={38} minSize={20}>
-                <ExplorerPane title={instancesTitle}>
+                <ExplorerPane title={instancesTitle} actions={selectedClass ? <CreateClassInstance classId={selectedClass} /> : undefined}>
                     {selectedClass ? (
                         // Natural heights inside ExplorerPane's single scroll region: a tall
                         // metadata card scrolls away instead of squeezing the list out.
@@ -49,7 +50,9 @@ const ExplorerShell = () => {
             <Panel defaultSize={40} minSize={20}>
                 <ExplorerPane title="Instance Inspector">
                     {selectedInstance ? (
-                        <InstanceInspector instanceId={selectedInstance} />
+                        // Keyed so per-instance UI state (form drafts, edit mode,
+                        // open dialogs) never survives navigating to another instance.
+                        <InstanceInspector key={selectedInstance} instanceId={selectedInstance} />
                     ) : (
                         <PanePlaceholder>Select an instance to view its properties.</PanePlaceholder>
                     )}

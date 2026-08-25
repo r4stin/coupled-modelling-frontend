@@ -8,6 +8,8 @@ import useSWR from 'swr';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import PaneStateBoundary from '@/components/ExplorerShell/PaneStateBoundary';
 import Icon from '@/components/Icons/Icon';
+import AddChildDialog from '@/components/InstanceInspector/AddChildDialog';
+import AddValueForm from '@/components/InstanceInspector/AddValueForm';
 import EditableLiteralValue from '@/components/InstanceInspector/EditableLiteralValue';
 import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -39,6 +41,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
     const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
     // Row currently in inline-edit mode; its delete affordance is hidden meanwhile.
     const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [isAddChildOpen, setIsAddChildOpen] = useState(false);
 
     // Inspector-link navigation can land on an instance of another class; once its types are
     // known, re-target the class so all three panes stay consistent. The URL is an external
@@ -55,8 +58,11 @@ const InstanceInspector = ({ instanceId }: Props) => {
 
     const instanceDisplay = data && hasDistinctLabel(data.label, data.id) ? `"${data.label}" (${data.id})` : `"${instanceId}"`;
 
-    const handleValueMutated = () => {
-        refreshClassInstances([...(data?.types ?? []), ...(selectedClass ? [selectedClass] : [])]).catch(() => undefined);
+    // Adding a value on an object property (or creating a child) can mint a new
+    // instance of that property's class, so callers pass the property/class name
+    // as an extra list to refresh.
+    const refreshAfterMutation = (extraClasses: string[] = []) => {
+        refreshClassInstances([...(data?.types ?? []), ...(selectedClass ? [selectedClass] : []), ...extraClasses]).catch(() => undefined);
         return refreshInstance(instanceId).catch(() => undefined);
     };
 
@@ -112,9 +118,14 @@ const InstanceInspector = ({ instanceId }: Props) => {
                     <div className="space-y-1 rounded-lg border border-border bg-background-secondary p-3">
                         <div className="flex items-start justify-between gap-2">
                             <h3 className="text-sm font-bold break-all">{data.label}</h3>
-                            <Button size="sm" variant="danger-soft" onPress={() => setPendingDelete({ type: 'instance', deleting: false })}>
-                                Delete instance
-                            </Button>
+                            <div className="flex shrink-0 gap-1.5">
+                                <Button size="sm" variant="primary" onPress={() => setIsAddChildOpen(true)}>
+                                    Add child
+                                </Button>
+                                <Button size="sm" variant="danger-soft" onPress={() => setPendingDelete({ type: 'instance', deleting: false })}>
+                                    Delete instance
+                                </Button>
+                            </div>
                         </div>
                         <div className="text-xs text-muted">ID: {data.id}</div>
                         {data.types.length > 0 && (
@@ -147,47 +158,51 @@ const InstanceInspector = ({ instanceId }: Props) => {
                                         <td className="py-1.5 pr-2 font-medium break-all">{group.property}</td>
                                         <td className="py-1.5">
                                             <div className="space-y-1">
-                                                {group.values.map((value, index) => (
-                                                    <div key={index} className="flex items-start justify-between gap-2">
-                                                        {value.kind === 'literal' ? (
-                                                            <EditableLiteralValue
-                                                                instanceId={instanceId}
-                                                                property={group.property}
-                                                                value={value}
-                                                                onSaved={handleValueMutated}
-                                                                onEditingChange={(editing) =>
-                                                                    setEditingKey(editing ? `${group.property}:${index}` : null)
-                                                                }
-                                                            />
-                                                        ) : (
-                                                            <PropertyValue value={value} onNavigate={selectInstance} />
-                                                        )}
-                                                        {editingKey !== `${group.property}:${index}` && (
-                                                            <button
-                                                                type="button"
-                                                                aria-label={`Delete ${group.property} value ${valueDisplayLabel(value)}`}
-                                                                title="Delete this value"
-                                                                className="-my-1 flex size-7 shrink-0 items-center justify-center rounded text-muted hover:bg-danger-soft hover:text-danger"
-                                                                onClick={() =>
-                                                                    setPendingDelete({
-                                                                        type: 'value',
-                                                                        property: group.property,
-                                                                        value,
-                                                                        deleting: false,
-                                                                    })
-                                                                }
-                                                            >
-                                                                <Icon className="size-5">
-                                                                    <path
-                                                                        d="M3 6h18M8 6V4h8v2m1 0-1 14H8L7 6m3 4v7m4-7v7"
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                    />
-                                                                </Icon>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                {group.values.map((value, index) => {
+                                                    // Identity-based key (index only breaks ties between equal values):
+                                                    // adds/deletes elsewhere in the group must not re-home an open
+                                                    // inline editor onto a different value.
+                                                    const valueKey = `${group.property}:${JSON.stringify(toDeleteTarget(value))}:${index}`;
+                                                    return (
+                                                        <div key={valueKey} className="flex items-start justify-between gap-2">
+                                                            {value.kind === 'literal' ? (
+                                                                <EditableLiteralValue
+                                                                    instanceId={instanceId}
+                                                                    property={group.property}
+                                                                    value={value}
+                                                                    onSaved={refreshAfterMutation}
+                                                                    onEditingChange={(editing) => setEditingKey(editing ? valueKey : null)}
+                                                                />
+                                                            ) : (
+                                                                <PropertyValue value={value} onNavigate={selectInstance} />
+                                                            )}
+                                                            {editingKey !== valueKey && (
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label={`Delete ${group.property} value ${valueDisplayLabel(value)}`}
+                                                                    title="Delete this value"
+                                                                    className="-my-1 flex size-7 shrink-0 items-center justify-center rounded text-muted hover:bg-danger-soft hover:text-danger"
+                                                                    onClick={() =>
+                                                                        setPendingDelete({
+                                                                            type: 'value',
+                                                                            property: group.property,
+                                                                            value,
+                                                                            deleting: false,
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    <Icon className="size-5">
+                                                                        <path
+                                                                            d="M3 6h18M8 6V4h8v2m1 0-1 14H8L7 6m3 4v7m4-7v7"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                        />
+                                                                    </Icon>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </td>
                                     </tr>
@@ -195,6 +210,13 @@ const InstanceInspector = ({ instanceId }: Props) => {
                             </tbody>
                         </table>
                     )}
+                    <AddValueForm instanceId={instanceId} onAdded={(property) => refreshAfterMutation([property])} />
+                    <AddChildDialog
+                        isOpen={isAddChildOpen}
+                        parentId={instanceId}
+                        onCreated={(childClass) => refreshAfterMutation([childClass])}
+                        onClose={() => setIsAddChildOpen(false)}
+                    />
                     <ConfirmDialog
                         isOpen={pendingDelete !== null}
                         title={dialogContent.title}

@@ -1,5 +1,5 @@
 import { backendApi } from '@/services/backend/api';
-import { DeleteValueTarget, InstancePropertyMetadata, PropertyDataMap } from '@/types/backend';
+import { DeleteValueTarget, InstanceId, InstancePropertyMetadata, PropertyDataMap } from '@/types/backend';
 
 export const instancesUrl = 'get_instance_property_metadata/';
 
@@ -15,3 +15,6 @@ export const addValues = (instance: string, data: PropertyDataMap) => backendApi
 
 export const replaceValue = (instance: string, property: string, oldValue: DeleteValueTarget, newValue: DeleteValueTarget) =>
     backendApi.post('replace_value/', { json: { instance, property, old_value: oldValue, new_value: newValue } });
+
+export const createInstance = (property: string, parent: string, data: PropertyDataMap) =>
+    backendApi.post('create_instance/', { json: { property, parent, data } }).json<InstanceId>();

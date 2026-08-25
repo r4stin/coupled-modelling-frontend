@@ -52,7 +52,7 @@ describe('InstanceInspector', () => {
         expect(screen.getByText('ID: instance_1')).toBeInTheDocument();
         expect(screen.getByText('solvers')).toBeInTheDocument();
         expect(screen.getByText('fluid_solver')).toBeInTheDocument();
-        expect(screen.getByText('echo_level')).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: 'echo_level' })).toBeInTheDocument();
         expect(screen.getByText('1')).toBeInTheDocument();
     });
 
