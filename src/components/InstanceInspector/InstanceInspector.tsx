@@ -18,7 +18,7 @@ import { toDeleteTarget } from '@/lib/deleteTargets';
 import { hasDistinctLabel } from '@/lib/styles';
 import { useExplorerRefresh } from '@/lib/useExplorerRefresh';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
-import { valueDisplayLabel } from '@/lib/valueDisplay';
+import { instanceDisplayName, valueDisplayLabel } from '@/lib/valueDisplay';
 import { deleteInstance, deleteValue, getInstancePropertyMetadata, instancesUrl } from '@/services/backend/instances';
 import { InstancePropertyGroup } from '@/types/backend';
 
@@ -58,7 +58,8 @@ const InstanceInspector = ({ instanceId }: Props) => {
     // A definitive not-found (deleted instance, stale URL) wins over any cached data.
     const notFound = isNotFound(error);
 
-    const instanceDisplay = data && hasDistinctLabel(data.label, data.id) ? `"${data.label}" (${data.id})` : `"${instanceId}"`;
+    const instanceDisplay =
+        data && hasDistinctLabel(data.label, data.id) ? `"${data.label}" (${data.id})` : `"${data ? instanceDisplayName(data) : instanceId}"`;
 
     // Adding a value on an object property (or creating a child) can mint a new
     // instance of that property's class, so callers pass the property/class name
@@ -119,7 +120,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
                 <div className="space-y-3">
                     <div className="space-y-1 rounded-lg border border-border bg-background-secondary p-3">
                         <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-sm font-bold break-all">{data.label}</h3>
+                            <h3 className="text-sm font-bold break-all">{instanceDisplayName(data)}</h3>
                             <div className="flex shrink-0 gap-1.5">
                                 <ExportKratosButton instanceId={instanceId} types={data.types} />
                                 <Button size="sm" variant="primary" onPress={() => setIsAddChildOpen(true)}>
@@ -144,10 +145,11 @@ const InstanceInspector = ({ instanceId }: Props) => {
                     {data.properties.length === 0 ? (
                         <p className="text-sm text-muted">This instance has no properties defined.</p>
                     ) : (
-                        <table className="w-full text-sm">
+                        // table-fixed: long previews truncate instead of widening the column.
+                        <table className="w-full table-fixed text-sm">
                             <thead>
                                 <tr className="border-b border-border text-left text-xs text-muted uppercase">
-                                    <th scope="col" className="py-1 pr-2 font-semibold">
+                                    <th scope="col" className="w-1/3 py-1 pr-2 font-semibold">
                                         Property
                                     </th>
                                     <th scope="col" className="py-1 font-semibold">

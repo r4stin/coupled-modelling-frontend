@@ -3,7 +3,8 @@
 import { Chip } from '@heroui/react';
 import { FC } from 'react';
 
-import { navLinkClass } from '@/lib/styles';
+import PreviewLine from '@/components/PreviewLine/PreviewLine';
+import { hasDistinctLabel, navLinkClass } from '@/lib/styles';
 import { valueDisplayLabel } from '@/lib/valueDisplay';
 import { InstancePropertyGroup } from '@/types/backend';
 
@@ -21,10 +22,21 @@ type Props = {
 /** One property value: a navigable link for object values, value + datatype/language badge for literals. */
 const PropertyValue: FC<Props> = ({ value, onNavigate }) => {
     if (value.kind === 'object') {
-        return (
+        const link = (
             <button type="button" className={navLinkClass} title={`Navigate to ${value.id}`} onClick={() => onNavigate?.(value.id)}>
                 {valueDisplayLabel(value)}
             </button>
+        );
+        // An unlabeled target is described by its class and a property preview
+        // instead of its raw UUID id; the full id stays in the tooltip.
+        if (hasDistinctLabel(value.label, value.id)) {
+            return link;
+        }
+        return (
+            <span className="min-w-0">
+                {link}
+                <PreviewLine preview={value.property_preview} truncated={value.preview_truncated} />
+            </span>
         );
     }
     return (

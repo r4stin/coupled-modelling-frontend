@@ -31,7 +31,25 @@ const metadata: InstancePropertyMetadata = {
     properties: [
         {
             property: 'data',
-            values: [{ kind: 'object', id: 'instance_9', label: 'Fluid mesh' }],
+            values: [{ kind: 'object', id: 'instance_9', label: 'Fluid mesh', types: ['meshes'], property_preview: [], preview_truncated: false }],
+        },
+        {
+            property: 'solver_settings',
+            values: [
+                {
+                    kind: 'object',
+                    id: 'instance_733f1d35-6558-4d16-8066-8666b14e300a',
+                    label: 'instance_733f1d35-6558-4d16-8066-8666b14e300a',
+                    types: ['solver_settings'],
+                    // Realistic truncated shape: the backend caps at three items.
+                    property_preview: [
+                        { property: 'num_steps', value: 30, kind: 'literal' },
+                        { property: 'start_time', value: 0, kind: 'literal' },
+                        { property: 'solver', value: 'CFD', kind: 'object' },
+                    ],
+                    preview_truncated: true,
+                },
+            ],
         },
         {
             property: 'echo_level',
@@ -111,6 +129,23 @@ describe('InstanceInspector', () => {
         render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
         await screen.findByRole('heading', { name: 'Fluid solver' });
         expect(onUrlUpdate).not.toHaveBeenCalled();
+    });
+
+    it('describes unlabeled linked objects by class, short id, and preview', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        const onUrlUpdate = vi.fn();
+        const user = userEvent.setup();
+        render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
+        await screen.findByRole('heading', { name: 'Fluid solver' });
+
+        const link = screen.getByRole('button', { name: 'solver_settings · instance_733f1d…' });
+        expect(link).toHaveAttribute('title', 'Navigate to instance_733f1d35-6558-4d16-8066-8666b14e300a');
+        expect(screen.getByText('num_steps:')).toBeInTheDocument();
+        expect(screen.getByText('· + more')).toBeInTheDocument();
+
+        await user.click(link);
+        const params = onUrlUpdate.mock.lastCall?.[0].searchParams;
+        expect(params?.get('instance')).toBe('instance_733f1d35-6558-4d16-8066-8666b14e300a');
     });
 
     it('hides the delete affordance of every row with an open editor', async () => {

@@ -738,8 +738,14 @@ export interface components {
             kind: "object";
             /** @description Identifier of the linked instance. */
             id: string;
-            /** @description Preferred label of the linked instance. */
+            /** @description Preferred label of the linked instance (falls back to the id when unlabeled). */
             label: string;
+            /** @description Local class names of the linked instance. */
+            types: string[];
+            /** @description Up to three of the linked instance's property values, literals first. */
+            property_preview: components["schemas"]["PreviewItem"][];
+            /** @description Whether the linked instance has more property values than the preview shows. */
+            preview_truncated: boolean;
         };
         LiteralPropertyValue: {
             /**

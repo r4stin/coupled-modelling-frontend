@@ -20,6 +20,9 @@
     :root {
         --field-border-width: 1px;
         --field-border: var(--border);
+        /* Links carry the interactive accent; HeroUI's default renders them in
+           plain foreground, indistinguishable from body text at rest. */
+        --link: var(--accent);
     }
 
     .dark,
