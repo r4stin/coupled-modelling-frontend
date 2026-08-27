@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import EditableLiteralValue from '@/components/InstanceInspector/EditableLiteralValue';
+import { XSD_BOOLEAN } from '@/lib/literalParsing';
 import { replaceValue } from '@/services/backend/instances';
 import { render, screen } from '@/testUtils';
 import { LiteralPropertyValue } from '@/types/backend';
@@ -78,6 +79,25 @@ describe('EditableLiteralValue', () => {
         await userEvent.type(input, 'abc{Enter}');
         expect(mockReplaceValue).not.toHaveBeenCalled();
         expect(screen.getByRole('textbox')).toBeInTheDocument();
+    });
+
+    it('edits booleans with a true/false select instead of free text', async () => {
+        mockReplaceValue.mockResolvedValue(new Response() as never);
+        const boolean: LiteralPropertyValue = { kind: 'literal', value: true, datatype: XSD_BOOLEAN };
+        const onSaved = await startEdit(boolean);
+
+        expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /edit echo_level value true/i }));
+        await userEvent.click(await screen.findByRole('option', { name: 'false' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        expect(mockReplaceValue).toHaveBeenCalledWith(
+            'instance_1',
+            'echo_level',
+            { kind: 'literal', value: true, datatype: XSD_BOOLEAN },
+            { kind: 'literal', value: false, datatype: XSD_BOOLEAN },
+        );
+        expect(onSaved).toHaveBeenCalled();
     });
 
     it('cancels with Escape without saving', async () => {

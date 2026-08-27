@@ -13,6 +13,7 @@ type Props = {
     value: string;
     onChange: (id: string) => void;
     isDisabled?: boolean;
+    autoFocus?: boolean;
     fullWidth?: boolean;
     className?: string;
 };
@@ -25,12 +26,14 @@ const OptionSelect: FC<Props> = ({
     value,
     onChange,
     isDisabled,
+    autoFocus,
     fullWidth,
     className,
 }) => (
     <Select
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        autoFocus={autoFocus}
         className={className}
         fullWidth={fullWidth}
         isDisabled={isDisabled}

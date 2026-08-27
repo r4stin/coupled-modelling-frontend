@@ -113,6 +113,20 @@ describe('InstanceInspector', () => {
         expect(onUrlUpdate).not.toHaveBeenCalled();
     });
 
+    it('hides the delete affordance of every row with an open editor', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        const user = userEvent.setup();
+        render(<InstanceInspector instanceId="instance_1" />);
+        await screen.findByRole('heading', { name: 'Fluid solver' });
+
+        await user.dblClick(screen.getByText('1'));
+        await user.dblClick(screen.getByText('Ein Löser'));
+
+        expect(screen.queryByRole('button', { name: 'Delete echo_level value 1' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Delete comment value Ein Löser' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete parallel_type value OpenMP' })).toBeInTheDocument();
+    });
+
     it('shows a not-found state when the backend rejects the instance id', async () => {
         mockMetadata.mockRejectedValue(notFoundError());
         render(<InstanceInspector instanceId="gone" />);

@@ -56,6 +56,24 @@ describe('AddValueForm', () => {
         expect(mockAddValues).not.toHaveBeenCalled();
     });
 
+    it('offers a true/false select for the Boolean type', async () => {
+        mockAddValues.mockResolvedValue(new Response() as never);
+        const user = userEvent.setup();
+        render(<AddValueForm instanceId="instance_1" onAdded={() => undefined} />);
+
+        await user.click(screen.getByRole('button', { name: /property to add/i }));
+        await user.click(await screen.findByRole('option', { name: 'print_colors' }));
+        await user.click(screen.getByRole('button', { name: /value type/i }));
+        await user.click(await screen.findByRole('option', { name: 'Boolean' }));
+
+        expect(screen.queryByRole('textbox', { name: 'New value' })).not.toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /new value/i }));
+        await user.click(await screen.findByRole('option', { name: 'true' }));
+        await user.click(screen.getByRole('button', { name: 'Add' }));
+
+        expect(mockAddValues).toHaveBeenCalledWith('instance_1', { print_colors: true });
+    });
+
     it('requires the instance prefix for Object ID values', async () => {
         const user = userEvent.setup();
         render(<AddValueForm instanceId="instance_1" onAdded={() => undefined} />);

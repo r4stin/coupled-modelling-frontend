@@ -6,7 +6,7 @@ import { FC, useState } from 'react';
 import OptionSelect from '@/components/FormDialog/OptionSelect';
 import { VALUE_PROPERTY_OPTIONS, VALUE_TYPE_OPTIONS } from '@/constants/properties';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { parseTypedValueInput, ValueTypeId } from '@/lib/literalParsing';
+import { BOOLEAN_OPTIONS, parseTypedValueInput, ValueTypeId } from '@/lib/literalParsing';
 import { addValues } from '@/services/backend/instances';
 
 type Props = {
@@ -66,17 +66,33 @@ const AddValueForm: FC<Props> = ({ instanceId, onAdded }) => {
                 className="w-28"
                 options={VALUE_TYPE_OPTIONS}
                 value={valueType}
-                onChange={(id) => setValueType(id as ValueTypeId)}
+                onChange={(id) => {
+                    setValueType(id as ValueTypeId);
+                    // A draft typed for one interpretation must not silently
+                    // carry over to another (e.g. hidden text behind the select).
+                    setRaw('');
+                }}
                 isDisabled={isAdding}
             />
-            {/* Stays enabled during the request so keyboard focus survives repeated adds. */}
-            <Input
-                aria-label="New value"
-                placeholder="Enter value or instance ID…"
-                className="min-w-32 flex-1"
-                value={raw}
-                onChange={(event) => setRaw(event.target.value)}
-            />
+            {valueType === 'boolean' ? (
+                <OptionSelect
+                    aria-label="New value"
+                    className="min-w-32 flex-1"
+                    options={BOOLEAN_OPTIONS}
+                    value={raw}
+                    onChange={setRaw}
+                    isDisabled={isAdding}
+                />
+            ) : (
+                // Stays enabled during the request so keyboard focus survives repeated adds.
+                <Input
+                    aria-label="New value"
+                    placeholder="Enter value or instance ID…"
+                    className="min-w-32 flex-1"
+                    value={raw}
+                    onChange={(event) => setRaw(event.target.value)}
+                />
+            )}
             <Button type="submit" size="sm" variant="primary" isDisabled={isAdding}>
                 {isAdding ? 'Adding…' : 'Add'}
             </Button>

@@ -3,11 +3,12 @@
 import { Button, Input, toast } from '@heroui/react';
 import { FC, KeyboardEvent, useState } from 'react';
 
+import OptionSelect from '@/components/FormDialog/OptionSelect';
 import Icon from '@/components/Icons/Icon';
 import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { toDeleteTarget } from '@/lib/deleteTargets';
-import { parseLiteralInput } from '@/lib/literalParsing';
+import { BOOLEAN_OPTIONS, parseLiteralInput, XSD_BOOLEAN } from '@/lib/literalParsing';
 import { valueDisplayLabel } from '@/lib/valueDisplay';
 import { replaceValue } from '@/services/backend/instances';
 import { LiteralPropertyValue } from '@/types/backend';
@@ -65,7 +66,8 @@ const EditableLiteralValue: FC<Props> = ({ instanceId, property, value, onSaved,
     };
 
     const startEditing = () => {
-        setDraft(String(value.value));
+        // Booleans seed the select's option ids, so normalise the spelling.
+        setDraft(value.datatype === XSD_BOOLEAN ? String(value.value).toLowerCase() : String(value.value));
         onEditingChange?.(true);
     };
 
@@ -81,7 +83,7 @@ const EditableLiteralValue: FC<Props> = ({ instanceId, property, value, onSaved,
                 tabIndex={0}
                 aria-label={`Edit ${property} value ${valueDisplayLabel(value)}`}
                 title="Double-click to edit"
-                className="-mx-1 inline-block min-w-0 cursor-text rounded px-1 py-0.5 hover:bg-default-soft focus-visible:outline focus-visible:outline-focus"
+                className="-mx-1 min-w-0 flex-1 cursor-text rounded px-1 py-0.5 hover:bg-default-soft focus-visible:outline focus-visible:outline-focus"
                 onDoubleClick={startEditing}
                 onKeyDown={(event) => event.key === 'Enter' && startEditing()}
             >
@@ -90,17 +92,34 @@ const EditableLiteralValue: FC<Props> = ({ instanceId, property, value, onSaved,
         );
     }
 
+    const editLabel = `Edit ${property} value ${valueDisplayLabel(value)}`;
+
     return (
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
-            <Input
-                aria-label={`Edit ${property} value ${valueDisplayLabel(value)}`}
-                autoFocus
-                className="h-7 min-w-0 flex-1 text-sm"
-                value={draft}
-                disabled={isSaving}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={onKeyDown}
-            />
+        // Escape on the span keeps cancel reachable from the boolean select too.
+        <span className="flex min-w-0 flex-1 items-center gap-1.5" onKeyDown={(event) => event.key === 'Escape' && stopEditing()}>
+            {value.datatype === XSD_BOOLEAN ? (
+                // Booleans are edited with a constrained choice: free text would
+                // have to be coerced or rejected, a select cannot be mistyped.
+                <OptionSelect
+                    aria-label={editLabel}
+                    autoFocus
+                    className="min-w-0 flex-1"
+                    options={BOOLEAN_OPTIONS}
+                    value={draft}
+                    onChange={setDraft}
+                    isDisabled={isSaving}
+                />
+            ) : (
+                <Input
+                    aria-label={editLabel}
+                    autoFocus
+                    className="h-7 min-w-0 flex-1 text-sm"
+                    value={draft}
+                    disabled={isSaving}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onKeyDown={onKeyDown}
+                />
+            )}
             <Button size="sm" variant="primary" isDisabled={isSaving} onPress={save}>
                 {isSaving ? '…' : 'Save'}
             </Button>

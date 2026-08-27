@@ -41,7 +41,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
     const { refreshInstance, purgeInstance, refreshClassInstances } = useExplorerRefresh();
     const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
     // Row currently in inline-edit mode; its delete affordance is hidden meanwhile.
-    const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [editingKeys, setEditingKeys] = useState<ReadonlySet<string>>(new Set());
     const [isAddChildOpen, setIsAddChildOpen] = useState(false);
 
     // Navigation can land on an instance of another class (inspector links) or with no
@@ -174,12 +174,24 @@ const InstanceInspector = ({ instanceId }: Props) => {
                                                                     property={group.property}
                                                                     value={value}
                                                                     onSaved={refreshAfterMutation}
-                                                                    onEditingChange={(editing) => setEditingKey(editing ? valueKey : null)}
+                                                                    onEditingChange={(editing) =>
+                                                                        // Several editors can be open at once; track them all
+                                                                        // so every editing row hides its delete affordance.
+                                                                        setEditingKeys((current) => {
+                                                                            const next = new Set(current);
+                                                                            if (editing) {
+                                                                                next.add(valueKey);
+                                                                            } else {
+                                                                                next.delete(valueKey);
+                                                                            }
+                                                                            return next;
+                                                                        })
+                                                                    }
                                                                 />
                                                             ) : (
                                                                 <PropertyValue value={value} onNavigate={selectInstance} />
                                                             )}
-                                                            {editingKey !== valueKey && (
+                                                            {!editingKeys.has(valueKey) && (
                                                                 <button
                                                                     type="button"
                                                                     aria-label={`Delete ${group.property} value ${valueDisplayLabel(value)}`}
