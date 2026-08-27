@@ -30,3 +30,21 @@
         --field-background: var(--surface-secondary);
     }
 }
+
+/*
+ * Outline buttons (the Import / Download OWL / Export JSON file actions): the
+ * stock variant is transparent at rest, and its border is only ~4% lightness
+ * away from the background-secondary surfaces these buttons sit on in light
+ * mode, so they don't read as buttons. A surface fill lifts them off those
+ * surfaces in both themes. (The filled `secondary` variant is no fix: its
+ * `--default` fill sits ~2% from the same surfaces in light mode and tints
+ * labels the accent color reserved for links.) Pressed matches hover — the
+ * press feedback comes from the button's scale transform. Unlayered on
+ * purpose: the variant defines these variables in the `components` cascade
+ * layer, which would override a rule in `base`.
+ */
+.button--outline {
+    --button-bg: var(--surface);
+    --button-bg-hover: var(--surface-hover);
+    --button-bg-pressed: var(--surface-hover);
+}
