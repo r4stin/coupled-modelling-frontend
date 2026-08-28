@@ -1,0 +1,8 @@
+.git
+.github
+node_modules
+.next
+coverage
+junit.xml
+.env*
+CLAUDE.md
