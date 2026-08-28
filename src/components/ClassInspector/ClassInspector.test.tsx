@@ -126,6 +126,30 @@ describe('ClassInspector', () => {
         expect(params?.get('instance')).toBeNull();
     });
 
+    it('collapses long related-class lists behind a "+N more" toggle', async () => {
+        const subclasses = Array.from({ length: 7 }, (_, index) => ({ id: `sub_${index + 1}`, label: `sub_${index + 1}` }));
+        mockMetadata.mockResolvedValue({ ...emptyMetadata, subclasses });
+        render(<ClassInspector classId="solvers" />);
+        expect(await screen.findByRole('button', { name: 'sub_5' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'sub_6' })).not.toBeInTheDocument();
+
+        const toggle = screen.getByRole('button', { name: '+2 more' });
+        await userEvent.click(toggle);
+        expect(screen.getByRole('button', { name: 'sub_7' })).toBeInTheDocument();
+        expect(toggle).toHaveTextContent('Show less');
+
+        await userEvent.click(toggle);
+        expect(screen.queryByRole('button', { name: 'sub_7' })).not.toBeInTheDocument();
+    });
+
+    it('shows a list one entry over the limit in full — collapsing must hide at least two', async () => {
+        const subclasses = Array.from({ length: 6 }, (_, index) => ({ id: `sub_${index + 1}`, label: `sub_${index + 1}` }));
+        mockMetadata.mockResolvedValue({ ...emptyMetadata, subclasses });
+        render(<ClassInspector classId="solvers" />);
+        expect(await screen.findByRole('button', { name: 'sub_6' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /more$/ })).not.toBeInTheDocument();
+    });
+
     it('shows a non-fatal warning when the metadata cannot be loaded', async () => {
         mockMetadata.mockRejectedValue(new Error('network down'));
         render(<ClassInspector classId="solvers" />);

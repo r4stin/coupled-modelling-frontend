@@ -37,7 +37,7 @@ const isNotFound = (error: unknown) => error instanceof HTTPError && (error.resp
 /** Instance details: label, id, types, and all direct properties with navigable object links and per-value deletion. */
 const InstanceInspector = ({ instanceId }: Props) => {
     const { data, error, isLoading } = useSWR([instancesUrl, instanceId], () => getInstancePropertyMetadata(instanceId));
-    const { selectedClass, selectInstance, alignClassWithInstanceTypes } = useExplorerSelection();
+    const { selectedClass, selectInstance, alignClassWithInstanceTypes, clearRemovedInstance } = useExplorerSelection();
     const { refreshInstance, purgeInstance, refreshClassInstances } = useExplorerRefresh();
     const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
     // Row currently in inline-edit mode; its delete affordance is hidden meanwhile.
@@ -97,7 +97,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
                 await deleteInstance(instanceId);
                 toast.success(`Instance ${instanceDisplay} deleted`);
                 purgeInstance(instanceId);
-                selectInstance(null);
+                clearRemovedInstance();
             }
             refreshClassInstances(affectedClasses).catch(() => undefined);
             setPendingDelete(null);
@@ -119,9 +119,12 @@ const InstanceInspector = ({ instanceId }: Props) => {
             {data && (
                 <div className="space-y-3">
                     <div className="space-y-1 rounded-lg border border-border bg-background-secondary p-3">
-                        <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-sm font-bold break-all">{instanceDisplayName(data)}</h3>
-                            <div className="flex shrink-0 gap-1.5">
+                        {/* The full title always stays readable by wrapping at word boundaries; at
+                            narrow pane widths the actions wrap below it (and among themselves)
+                            instead of crushing it into a one-character column. */}
+                        <div className="flex flex-wrap items-start gap-2">
+                            <h3 className="min-w-0 grow basis-40 text-sm font-bold wrap-break-word">{instanceDisplayName(data)}</h3>
+                            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
                                 <ExportKratosButton instanceId={instanceId} types={data.types} />
                                 <Button size="sm" variant="primary" onPress={() => setIsAddChildOpen(true)}>
                                     Add child
