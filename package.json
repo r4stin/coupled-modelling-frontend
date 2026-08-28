@@ -2,14 +2,19 @@
     "name": "coupled-modelling-frontend",
     "version": "0.1.0",
     "private": true,
+    "engines": {
+        "node": ">=20"
+    },
     "scripts": {
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
         "test": "vitest",
-        "test:ci": "vitest run",
+        "test:ci": "vitest run --reporter=default --reporter=junit --outputFile=junit.xml",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
+        "format": "prettier --write src eslint.config.mjs next.config.ts postcss.config.mjs vitest.config.mts",
+        "format:check": "prettier --check src eslint.config.mjs next.config.ts postcss.config.mjs vitest.config.mts",
         "type-check": "tsc --noEmit",
         "generate:api-types": "openapi-typescript http://localhost:5000/api/v1.0/openapi.yaml -o src/types/openapi.ts"
     },

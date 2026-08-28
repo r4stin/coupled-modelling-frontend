@@ -2,6 +2,7 @@
 
 Web explorer for the coupled multiphysics simulation knowledge base ([coupled_modelling](https://github.com/r4stin/coupled_modelling) backend: Kratos CoSimulation configurations stored as OWL in GraphDB).
 
+[![Frontend CI](https://github.com/r4stin/coupled-modelling-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/r4stin/coupled-modelling-frontend/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?logo=nextdotjs&logoColor=white)]()
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg?logo=typescript&logoColor=white)]()
@@ -11,6 +12,8 @@ Web explorer for the coupled multiphysics simulation knowledge base ([coupled_mo
 [![nuqs](https://img.shields.io/badge/nuqs-URL_State-4B5563.svg)]()
 
 ## Getting started
+
+Requires **Node 20+**.
 
 1. Start the backend (see `README_GRAPHDB.md` in the backend repo): GraphDB on `localhost:7200`, then the Flask API on `localhost:5000`.
 2. Configure the API URL (defaults work for local development):
