@@ -50,6 +50,6 @@ describe('ExplorerShell', () => {
         expect(await screen.findByText('No instances found for this class.')).toBeInTheDocument();
         expect(await screen.findByText('Solver classes.')).toBeInTheDocument();
         // Scoped to the tree pane: the inspector renders class-nav buttons with the same names.
-        await within(screen.getByRole('region', { name: 'Class Hierarchy' })).findByRole('button', { name: 'solvers' });
+        await within(screen.getByRole('region', { name: 'Class Hierarchy' })).findByRole('row', { name: 'solvers' });
     });
 });

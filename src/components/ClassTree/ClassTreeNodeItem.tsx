@@ -2,70 +2,61 @@
 
 import { cn, IconChevronRight } from '@heroui/react';
 import { FC } from 'react';
+import { Button, TreeItem, TreeItemContent } from 'react-aria-components';
 
-import { ClassTreeNode } from '@/lib/classTree';
+import { childPath, ClassTreeNode } from '@/lib/classTree';
 import { selectableRowClass } from '@/lib/styles';
 
 type Props = {
     node: ClassTreeNode;
     /** Path of the parent occurrence ('' for roots); a multi-parent class keeps independent expansion state per occurrence. */
     parentPath: string;
-    isExpanded: (path: string) => boolean;
     selectedClass: string | null;
-    onToggle: (path: string) => void;
-    onSelect: (name: string) => void;
+    onPress: (name: string) => void;
 };
 
-const ClassTreeNodeItem: FC<Props> = ({ node, parentPath, isExpanded, selectedClass, onToggle, onSelect }) => {
-    const path = parentPath ? `${parentPath}/${node.name}` : node.name;
+const ClassTreeNodeItem: FC<Props> = ({ node, parentPath, selectedClass, onPress }) => {
+    const path = childPath(parentPath, node.name);
     const hasChildren = node.children.length > 0;
-    const expanded = isExpanded(path);
-    const isSelected = selectedClass === node.name;
 
     return (
-        <li>
-            <div className={selectableRowClass(isSelected, 'flex items-center gap-1')}>
-                {hasChildren ? (
-                    <button
-                        type="button"
-                        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${node.name}`}
-                        aria-expanded={expanded}
-                        className="flex size-5 shrink-0 items-center justify-center rounded text-muted hover:text-foreground"
-                        onClick={() => onToggle(path)}
-                    >
-                        <IconChevronRight className={cn('size-3 transition-transform', expanded && 'rotate-90')} />
-                    </button>
-                ) : (
-                    <span aria-hidden className="flex size-5 shrink-0 items-center justify-center text-muted">
-                        ·
-                    </span>
+        <TreeItem
+            id={path}
+            textValue={node.name}
+            className={selectableRowClass(selectedClass === node.name, 'flex cursor-pointer items-center gap-1')}
+            onPress={() => onPress(node.name)}
+        >
+            <TreeItemContent>
+                {({ isExpanded, level }) => (
+                    <>
+                        {/* One guide segment per ancestor level; segments align across rows
+                            into the continuous indent lines the nested layout drew. With the
+                            row's gap-1, each level indents 21px, matching the old geometry. */}
+                        {Array.from({ length: level - 1 }, (_, index) => (
+                            <span key={index} aria-hidden className="ml-3 w-1.25 shrink-0 self-stretch border-l border-border" />
+                        ))}
+                        {hasChildren ? (
+                            <Button
+                                slot="chevron"
+                                className="flex size-5 shrink-0 items-center justify-center rounded text-muted hover:text-foreground"
+                            >
+                                <IconChevronRight className={cn('size-3 transition-transform', isExpanded && 'rotate-90')} />
+                            </Button>
+                        ) : (
+                            <span aria-hidden className="flex size-5 shrink-0 items-center justify-center text-muted">
+                                ·
+                            </span>
+                        )}
+                        <span className="min-w-0 flex-1 truncate py-1 text-left text-sm" title={node.name}>
+                            {node.name}
+                        </span>
+                    </>
                 )}
-                <button
-                    type="button"
-                    aria-current={isSelected || undefined}
-                    className="min-w-0 flex-1 truncate py-1 text-left text-sm"
-                    onClick={() => onSelect(node.name)}
-                    title={node.name}
-                >
-                    {node.name}
-                </button>
-            </div>
-            {hasChildren && expanded && (
-                <ul className="ml-4 border-l border-border pl-1">
-                    {node.children.map((child) => (
-                        <ClassTreeNodeItem
-                            key={child.name}
-                            node={child}
-                            parentPath={path}
-                            isExpanded={isExpanded}
-                            selectedClass={selectedClass}
-                            onToggle={onToggle}
-                            onSelect={onSelect}
-                        />
-                    ))}
-                </ul>
-            )}
-        </li>
+            </TreeItemContent>
+            {node.children.map((child) => (
+                <ClassTreeNodeItem key={child.name} node={child} parentPath={path} selectedClass={selectedClass} onPress={onPress} />
+            ))}
+        </TreeItem>
     );
 };
 

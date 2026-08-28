@@ -12,10 +12,14 @@ type CustomOptions = {
     onUrlUpdate?: OnUrlUpdateFunction;
 };
 
-/** Renders with the app's real provider stack, an isolated SWR cache, and a nuqs testing adapter. */
+/**
+ * Renders with the app's real provider stack, an isolated SWR cache, and a nuqs
+ * testing adapter. hasMemory reflects URL updates back into hook state, like a
+ * real adapter — same-value guards in the selection hook read the current value.
+ */
 const customRender = (ui: ReactElement, { searchParams, onUrlUpdate, ...options }: Omit<RenderOptions, 'wrapper'> & CustomOptions = {}) => {
     const AllProviders = ({ children }: { children: ReactNode }) => (
-        <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+        <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
             <Providers>
                 <SWRConfig value={{ provider: () => new Map() }}>{children}</SWRConfig>
             </Providers>

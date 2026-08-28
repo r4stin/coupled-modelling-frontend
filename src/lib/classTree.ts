@@ -124,6 +124,31 @@ export const isSubclassOf = (parentsOf: Map<string, string[]>, className: string
 };
 
 /** Every path (root → … → occurrence) at which the given class appears in the tree. */
+/**
+ * Row-key encoding for tree occurrences: the '/'-joined trail of class names
+ * from a root ('a/shared'), unique per occurrence of a multi-parent class.
+ * '/' is a safe delimiter: backend local names are validated to alphanumerics
+ * plus '_', '-' and '.' (never '/').
+ */
+export const childPath = (parentPath: string, name: string): string => (parentPath ? `${parentPath}/${name}` : name);
+
+export const pathKey = (trail: string[]): string => trail.join('/');
+
+export const classOfPath = (path: string): string => path.split('/').at(-1) ?? path;
+
+/** Every path prefix leading to one of the given occurrences, each occurrence itself included. */
+export const revealedPrefixes = (occurrences: string[][]): Set<string> => {
+    const keys = new Set<string>();
+    for (const trail of occurrences) {
+        let prefix = '';
+        for (const name of trail) {
+            prefix = childPath(prefix, name);
+            keys.add(prefix);
+        }
+    }
+    return keys;
+};
+
 export const findPathsToClass = (tree: ClassTreeNode[], name: string): string[][] => {
     const paths: string[][] = [];
     const walk = (node: ClassTreeNode, trail: string[]) => {
