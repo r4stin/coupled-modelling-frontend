@@ -5,7 +5,7 @@
  * (coupled_modelling/openapi.yaml). Regenerate with `npm run generate:api-types`
  * after the spec changes — do not edit src/types/openapi.ts by hand.
  */
-import type { components } from '@/types/openapi';
+import type { components, operations } from '@/types/openapi';
 
 export type ApiError = components['schemas']['Error'];
 export type ScalarValue = components['schemas']['ScalarValue'];
@@ -32,3 +32,7 @@ export type DeleteValueTarget = components['schemas']['ObjectValueTarget'] | com
 export type InstanceId = components['schemas']['InstanceId'];
 export type PropertyDataMap = components['schemas']['PropertyDataMap'];
 export type KratosParameters = components['schemas']['KratosParameters'];
+
+export type SearchResults = components['schemas']['SearchResults'];
+export type SearchClassResult = components['schemas']['SearchClassResult'];
+export type SearchType = NonNullable<NonNullable<operations['searchEntities']['parameters']['query']>['type']>;

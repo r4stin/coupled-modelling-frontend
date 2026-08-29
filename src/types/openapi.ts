@@ -68,6 +68,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search classes and instances by name or label
+         * @description Case-insensitive substring search over the local names and labels of
+         *     project classes and instances. Each result group is capped at `limit`;
+         *     matches on a name prefix rank before other matches. Instance results
+         *     carry the same summary shape as `get_class_instance_summaries`.
+         */
+        get: operations["searchEntities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/get_class_instance_summaries/": {
         parameters: {
             query?: never;
@@ -689,6 +712,16 @@ export interface components {
              */
             kind: "literal" | "object";
         };
+        SearchResults: {
+            /** @description Matching classes (empty when `type=instance`). */
+            classes: components["schemas"]["SearchClassResult"][];
+            /** @description Matching instances (empty when `type=class`). */
+            instances: components["schemas"]["InstanceSummary"][];
+        };
+        SearchClassResult: {
+            /** @description Local class name. */
+            id: string;
+        };
         InstanceSummary: {
             /** @description Local instance identifier. */
             id: string;
@@ -991,6 +1024,47 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            500: components["responses"]["UnexpectedError"];
+            503: components["responses"]["GraphDBUnavailable"];
+        };
+    };
+    searchEntities: {
+        parameters: {
+            query: {
+                /**
+                 * @description Search text (matched as a case-insensitive substring).
+                 * @example mok
+                 */
+                q: string;
+                /** @description Restrict results to one entity kind. */
+                type?: "all" | "class" | "instance";
+                /** @description Maximum results per group (1-100). */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching classes and instances. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
+                };
+            };
+            /** @description Missing or empty `q`, unknown `type`, or `limit` out of range. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             500: components["responses"]["UnexpectedError"];
             503: components["responses"]["GraphDBUnavailable"];
         };
