@@ -1,7 +1,7 @@
 'use client';
 
-import { cn, IconSearch } from '@heroui/react';
-import { FC, Key, useEffect, useMemo, useRef, useState } from 'react';
+import { CloseIcon, cn, IconSearch } from '@heroui/react';
+import { FC, Key, RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Autocomplete,
     Button,
@@ -36,6 +36,8 @@ const TYPE_OPTIONS: { id: SearchType; label: string }[] = [
     { id: 'instance', label: 'Instances' },
 ];
 
+const isInside = (refs: RefObject<HTMLElement | null>[], target: Node | null) => refs.some((ref) => ref.current?.contains(target));
+
 type SearchOption = { id: string; text: string; preview?: { items: PreviewItem[]; truncated: boolean } };
 type SearchSection = { id: string; label: string; options: SearchOption[] };
 type OptionTarget = { kind: 'class' | 'instance'; id: string; types: string[] };
@@ -48,6 +50,8 @@ const HeaderSearch: FC = () => {
     const [query, setQuery] = useState({ text: '', type: 'all' as SearchType });
     const [isDismissed, setIsDismissed] = useState(false);
     const fieldRef = useRef<HTMLDivElement>(null);
+    const resultsRef = useRef<HTMLElement>(null);
+    const filterRef = useRef<HTMLElement>(null);
 
     // Immediate, not debounced: a cleared input must not show stale results.
     // Every path that empties the input must call this.
@@ -99,6 +103,25 @@ const HeaderSearch: FC = () => {
 
     // The live input must be non-empty too: a stale debounced query alone must never open the popover.
     const isOpen = !isDismissed && query.text !== '' && trimmedText !== '';
+
+    // Non-modal popovers opt out of react-aria's outside dismissal — close on outside pointerdown ourselves.
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        const dismissOutside = (event: PointerEvent) => {
+            // While the modal filter popover is open, its underlay owns every outside click.
+            if (filterRef.current) {
+                return;
+            }
+            if (!isInside([fieldRef, resultsRef], event.target as Node)) {
+                setIsDismissed(true);
+            }
+        };
+        // Capture phase: react-aria pressables stop pointerdown propagation before it bubbles.
+        document.addEventListener('pointerdown', dismissOutside, true);
+        return () => document.removeEventListener('pointerdown', dismissOutside, true);
+    }, [isOpen]);
     const status = error ? 'Search failed' : data === undefined ? 'Searching…' : sections.length === 0 ? 'No matches' : null;
 
     const handleAction = (key: Key) => {
@@ -127,12 +150,29 @@ const HeaderSearch: FC = () => {
                 }
             }}
         >
-            <div ref={fieldRef} className="hidden h-8 w-56 items-center gap-1 rounded-lg border border-border bg-surface px-2 md:flex">
+            <div
+                ref={fieldRef}
+                onBlur={(event) => {
+                    // Close when keyboard focus leaves the search area; text stays for refining later.
+                    if (event.relatedTarget && !isInside([fieldRef, resultsRef, filterRef], event.relatedTarget)) {
+                        setIsDismissed(true);
+                    }
+                }}
+                className="hidden h-8 w-56 items-center gap-1 rounded-lg border border-border bg-surface px-2 md:flex"
+            >
                 <IconSearch className="size-4 shrink-0 text-muted" />
                 {/* SearchField, not a bare Input: it consumes the Autocomplete's
                     field context (a bare Input is not wired to it). */}
-                <SearchField aria-label="Search the knowledge base" className="min-w-0 flex-1">
-                    <Input placeholder="Search…" className="w-full bg-transparent text-sm outline-none placeholder:text-muted" />
+                <SearchField aria-label="Search the knowledge base" className="group flex min-w-0 flex-1 items-center gap-1">
+                    <Input
+                        onFocus={() => setIsDismissed(false)}
+                        placeholder="Search…"
+                        className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted"
+                    />
+                    {/* SearchField wires this as its clear button; Escape is the keyboard path (RAC keeps it out of the tab order). */}
+                    <Button className="flex size-4 shrink-0 items-center justify-center text-muted outline-none group-data-empty:hidden hover:text-foreground">
+                        <CloseIcon className="size-4" />
+                    </Button>
                 </SearchField>
                 <DialogTrigger>
                     <Button
@@ -146,7 +186,7 @@ const HeaderSearch: FC = () => {
                             <path d="M4 6h16M7 12h10m-7 6h4" strokeLinecap="round" />
                         </Icon>
                     </Button>
-                    <Popover placement="bottom end">
+                    <Popover ref={filterRef} placement="bottom end">
                         <Dialog aria-label="Search filter options" className="rounded-lg border border-border bg-surface p-1 shadow-lg outline-none">
                             {({ close }) => (
                                 <ToggleButtonGroup
@@ -155,6 +195,8 @@ const HeaderSearch: FC = () => {
                                     selectedKeys={[searchType]}
                                     onSelectionChange={(keys) => {
                                         setSearchType([...keys][0] as SearchType);
+                                        // Refining the filter is search intent — undo a prior dismissal.
+                                        setIsDismissed(false);
                                         close();
                                     }}
                                     className="flex flex-col"
@@ -177,6 +219,7 @@ const HeaderSearch: FC = () => {
                 </DialogTrigger>
             </div>
             <Popover
+                ref={resultsRef}
                 triggerRef={fieldRef}
                 isOpen={isOpen}
                 onOpenChange={(open) => {

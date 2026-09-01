@@ -109,4 +109,49 @@ describe('HeaderSearch', () => {
         await new Promise((resolve) => setTimeout(resolve, 400));
         expect(mockSearch).not.toHaveBeenCalled();
     });
+
+    it('clicking outside closes the results, keeps the typed text, and refocusing reopens them', async () => {
+        mockSearch.mockResolvedValue(results);
+        const user = userEvent.setup({ delay: null });
+        render(<HeaderSearch />);
+
+        await user.type(searchInput(), 'onera');
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+
+        await user.click(document.body);
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+        expect(searchInput()).toHaveValue('onera');
+
+        await user.click(searchInput());
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+    });
+
+    it('the clear button empties the input and hides the results', async () => {
+        mockSearch.mockResolvedValue(results);
+        const user = userEvent.setup({ delay: null });
+        render(<HeaderSearch />);
+
+        await user.type(searchInput(), 'onera');
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Clear search' }));
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+        expect(searchInput()).toHaveValue('');
+    });
+
+    it('changing the filter type reopens dismissed results', async () => {
+        mockSearch.mockResolvedValue(results);
+        const user = userEvent.setup({ delay: null });
+        render(<HeaderSearch />);
+
+        await user.type(searchInput(), 'onera');
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+        await user.click(document.body);
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Search filter: All' }));
+        await user.click(await screen.findByRole('radio', { name: 'Classes' }));
+        await waitFor(() => expect(mockSearch).toHaveBeenCalledWith('onera', 'class'));
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+    });
 });
