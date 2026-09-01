@@ -49,18 +49,22 @@ const HeaderSearch: FC = () => {
     const [isDismissed, setIsDismissed] = useState(false);
     const fieldRef = useRef<HTMLDivElement>(null);
 
+    // Immediate, not debounced: a cleared input must not show stale results.
+    // Every path that empties the input must call this.
+    const clearQuery = () => setQuery((previous) => (previous.text === '' ? previous : { ...previous, text: '' }));
+
+    const trimmedText = text.trim();
     useEffect(() => {
-        const trimmed = text.trim();
-        if (!trimmed) {
-            // Immediate, not debounced: a cleared input must not show stale results.
-            setQuery({ text: '', type: searchType });
+        if (!trimmedText) {
             return;
         }
-        const handle = setTimeout(() => setQuery({ text: trimmed, type: searchType }), SEARCH_DEBOUNCE_MS);
+        const handle = setTimeout(() => setQuery({ text: trimmedText, type: searchType }), SEARCH_DEBOUNCE_MS);
         return () => clearTimeout(handle);
-    }, [text, searchType]);
+    }, [trimmedText, searchType]);
 
-    const { data, error } = useSWR(query.text ? [searchUrl, query.text, query.type] : null, () => searchEntities(query.text, query.type));
+    const { data, error } = useSWR(query.text ? ([searchUrl, query.text, query.type] as const) : null, ([, queryText, queryType]) =>
+        searchEntities(queryText, queryType),
+    );
 
     const { sections, targets } = useMemo(() => {
         const builtSections: SearchSection[] = [];
@@ -93,7 +97,8 @@ const HeaderSearch: FC = () => {
         return { sections: builtSections, targets: builtTargets };
     }, [data]);
 
-    const isOpen = !isDismissed && query.text !== '';
+    // The live input must be non-empty too: a stale debounced query alone must never open the popover.
+    const isOpen = !isDismissed && query.text !== '' && trimmedText !== '';
     const status = error ? 'Search failed' : data === undefined ? 'Searching…' : sections.length === 0 ? 'No matches' : null;
 
     const handleAction = (key: Key) => {
@@ -108,7 +113,7 @@ const HeaderSearch: FC = () => {
             alignClassWithInstanceTypes(target.types);
         }
         setText('');
-        setQuery({ text: '', type: searchType });
+        clearQuery();
     };
 
     return (
@@ -117,6 +122,9 @@ const HeaderSearch: FC = () => {
             onInputChange={(value) => {
                 setText(value);
                 setIsDismissed(false);
+                if (!value.trim()) {
+                    clearQuery();
+                }
             }}
         >
             <div ref={fieldRef} className="hidden h-8 w-56 items-center gap-1 rounded-lg border border-border bg-surface px-2 md:flex">

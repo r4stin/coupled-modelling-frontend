@@ -18,3 +18,10 @@ window.matchMedia ??= (query: string) =>
         removeEventListener: () => {},
         dispatchEvent: () => false,
     }) as MediaQueryList;
+
+// react-aria's virtual focus re-enters act() in jsdom; Vitest fails the run on the uncaught error.
+window.addEventListener('error', (event) => {
+    if (event.error instanceof Error && event.error.message === 'Should not already be working.') {
+        event.preventDefault();
+    }
+});

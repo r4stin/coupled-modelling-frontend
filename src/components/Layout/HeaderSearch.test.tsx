@@ -77,6 +77,32 @@ describe('HeaderSearch', () => {
         expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
     });
 
+    it('clearing the input hides the results without waiting for the debounce', async () => {
+        mockSearch.mockResolvedValue(results);
+        // delay: null — no macrotask gaps for the debounce timer to fire into.
+        const user = userEvent.setup({ delay: null });
+        render(<HeaderSearch />);
+
+        await user.type(searchInput(), 'onera');
+        expect(await screen.findByRole('menu', { name: 'Search results' })).toBeInTheDocument();
+
+        await user.clear(searchInput());
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('clearing during the debounce window cancels the pending search', async () => {
+        mockSearch.mockResolvedValue(results);
+        const user = userEvent.setup({ delay: null });
+        render(<HeaderSearch />);
+
+        await user.type(searchInput(), 'onera');
+        await user.clear(searchInput());
+
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+        expect(mockSearch).not.toHaveBeenCalled();
+    });
+
     it('does not query the backend while the input is empty', async () => {
         mockSearch.mockResolvedValue(results);
         render(<HeaderSearch />);
