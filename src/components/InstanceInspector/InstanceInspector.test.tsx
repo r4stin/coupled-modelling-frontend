@@ -3,13 +3,14 @@ import { HTTPError } from 'ky';
 import { describe, expect, it, vi } from 'vitest';
 
 import InstanceInspector from '@/components/InstanceInspector/InstanceInspector';
-import { deleteInstance, deleteValue, getInstancePropertyMetadata } from '@/services/backend/instances';
-import { render, screen } from '@/testUtils';
+import { deleteInstance, deleteValue, getInstanceDeletionPreview, getInstancePropertyMetadata } from '@/services/backend/instances';
+import { render, screen, waitFor } from '@/testUtils';
 import { InstancePropertyMetadata } from '@/types/backend';
 
 vi.mock('@/services/backend/instances', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/backend/instances')>()),
     getInstancePropertyMetadata: vi.fn(),
+    getInstanceDeletionPreview: vi.fn(),
     deleteValue: vi.fn(),
     deleteInstance: vi.fn(),
 }));
@@ -23,6 +24,7 @@ vi.mock('@/services/backend/classes', async (importOriginal) => ({
 const mockMetadata = vi.mocked(getInstancePropertyMetadata);
 const mockDeleteValue = vi.mocked(deleteValue);
 const mockDeleteInstance = vi.mocked(deleteInstance);
+const mockDeletionPreview = vi.mocked(getInstanceDeletionPreview);
 
 const metadata: InstancePropertyMetadata = {
     id: 'instance_1',
@@ -67,6 +69,9 @@ const metadata: InstancePropertyMetadata = {
 };
 
 const notFoundError = () => new HTTPError(new Response('', { status: 400 }), new Request('http://localhost/'), {} as never);
+
+/** Preview of a leaf instance: nothing contained, nothing kept, no other links. */
+const leafPreview = { instance: 'instance_1', deleted: ['instance_1'], kept: [], unlinked_from: [] };
 
 describe('InstanceInspector', () => {
     it('renders the header (label, id, type chips) and the property table', async () => {
@@ -219,20 +224,101 @@ describe('InstanceInspector', () => {
         expect(mockDeleteValue).not.toHaveBeenCalled();
     });
 
-    it('deletes the instance after confirmation and clears the selection', async () => {
+    it('deletes the instance after confirmation, clears the selection, and never refetches it', async () => {
         mockMetadata.mockResolvedValue(metadata);
-        mockDeleteInstance.mockResolvedValue(undefined as never);
+        mockDeletionPreview.mockResolvedValue(leafPreview);
+        mockDeleteInstance.mockResolvedValue({ status: 'success', ...leafPreview });
         const onUrlUpdate = vi.fn();
         render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\)/)).toBeInTheDocument();
+        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteInstance).toHaveBeenCalledWith('instance_1');
-        expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get('instance')).toBeNull();
+        await waitFor(() => expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get('instance')).toBeNull());
+        expect(mockMetadata).toHaveBeenCalledTimes(1);
+    });
+
+    it('spells out the cascade before deleting and reports the count afterwards', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        const cascade = {
+            instance: 'instance_1',
+            deleted: ['instance_1', 'instance_9', 'instance_733f1d35-6558-4d16-8066-8666b14e300a'],
+            kept: ['instance_5'],
+            unlinked_from: ['instance_7'],
+        };
+        mockDeletionPreview.mockResolvedValue(cascade);
+        mockDeleteInstance.mockResolvedValue({ status: 'success', ...cascade });
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(
+            await screen.findByText(
+                /and the 2 instances it contains from the knowledge base\? 1 instance linked below it is still reachable from elsewhere and will be kept\. It is also linked from 1 other instance\. That link will be removed\./,
+            ),
+        ).toBeInTheDocument();
+        expect(mockDeletionPreview).toHaveBeenCalledWith('instance_1');
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(await screen.findByText(/deleted with 2 contained instances/)).toBeInTheDocument();
+    });
+
+    it('fetches a fresh preview every time the dialog is reopened', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeletionPreview.mockResolvedValue(leafPreview);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+        expect(mockDeletionPreview).toHaveBeenCalledTimes(2);
+    });
+
+    it('blocks confirming while the preview is still loading', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeletionPreview.mockReturnValue(new Promise(() => undefined));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText(/Checking what deleting instance/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+        expect(mockDeleteInstance).not.toHaveBeenCalled();
+    });
+
+    it('falls back to a generic cascade warning when the preview fails', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockDeletionPreview.mockRejectedValue(new Error('GraphDB unavailable'));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText(/and everything it contains from the knowledge base\?/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    });
+
+    it('shows the not-found state when the preview reveals the instance is already gone', async () => {
+        mockMetadata.mockResolvedValueOnce(metadata).mockRejectedValue(notFoundError());
+        mockDeletionPreview.mockRejectedValue(notFoundError());
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText('This instance no longer exists in the knowledge base.')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+
+    it('closes the dialog and explains when the backend refuses the deletion but the entry still loads', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        const refused = new HTTPError(
+            new Response(JSON.stringify({ error: 'Instance instance_1 does not exist in GraphDB.' }), { status: 400 }),
+            new Request('http://localhost/'),
+            {} as never,
+        );
+        mockDeletionPreview.mockRejectedValue(refused);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText('Instance instance_1 does not exist in GraphDB.')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument());
+        expect(screen.getByRole('heading', { name: 'Fluid solver' })).toBeInTheDocument();
     });
 
     it('keeps the dialog open and reports the backend error when deletion fails', async () => {
         mockMetadata.mockResolvedValue(metadata);
+        mockDeletionPreview.mockResolvedValue(leafPreview);
         mockDeleteInstance.mockRejectedValue(new Error('GraphDB unavailable'));
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));

@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertDialog, Button } from '@heroui/react';
-import { FC, useState } from 'react';
+import { FC, useId, useState } from 'react';
 
 type Props = {
     isOpen: boolean;
@@ -11,6 +11,8 @@ type Props = {
     /** Label shown on the confirm button while the action runs. */
     pendingLabel?: string;
     isPending: boolean;
+    /** Blocks confirming while the message is not final yet (e.g. a consequence preview is loading). */
+    isConfirmDisabled?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
 };
@@ -23,6 +25,7 @@ const ConfirmDialog: FC<Props> = ({
     confirmLabel = 'Delete',
     pendingLabel = 'Deleting…',
     isPending,
+    isConfirmDisabled = false,
     onConfirm,
     onCancel,
 }) => {
@@ -32,21 +35,27 @@ const ConfirmDialog: FC<Props> = ({
     if (isOpen && (content.title !== title || content.message !== message)) {
         setContent({ title, message });
     }
+    const messageId = useId();
 
     return (
         <AlertDialog.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && !isPending && onCancel()}>
             <AlertDialog.Container>
-                <AlertDialog.Dialog>
+                <AlertDialog.Dialog aria-describedby={messageId}>
                     <AlertDialog.Header>
                         <AlertDialog.Icon status="danger" />
                         <AlertDialog.Heading>{content.title}</AlertDialog.Heading>
                     </AlertDialog.Header>
-                    <AlertDialog.Body>{content.message}</AlertDialog.Body>
+                    <AlertDialog.Body>
+                        {/* Live region: the message can change while the dialog is open (a loaded preview). */}
+                        <span id={messageId} aria-live="polite">
+                            {content.message}
+                        </span>
+                    </AlertDialog.Body>
                     <AlertDialog.Footer>
                         <Button variant="ghost" isDisabled={isPending} onPress={onCancel}>
                             Cancel
                         </Button>
-                        <Button variant="danger" isDisabled={isPending} onPress={onConfirm}>
+                        <Button variant="danger" isDisabled={isPending || isConfirmDisabled} onPress={onConfirm}>
                             {isPending ? pendingLabel : confirmLabel}
                         </Button>
                     </AlertDialog.Footer>

@@ -343,12 +343,41 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Delete an instance and all its triples (direct SPARQL)
-         * @description Cascading delete: removes every outgoing (`<inst> ?p ?o`) and incoming
-         *     (`?s ?p <inst>`) triple of the instance in one SPARQL update, so no
-         *     orphan references remain.
+         * Delete an instance and, by default, its owned subtree (direct SPARQL)
+         * @description Removes every outgoing and incoming triple of the instance in one
+         *     transactional SPARQL update. With `cascade` (the default) the instance's
+         *     owned subtree goes with it: every individual reachable through `has_*`
+         *     links that is not reachable from outside the subtree. Coupled systems are
+         *     never owned by another instance, so traversal stops at them. Individuals
+         *     still reachable from elsewhere (an instance linked from outside and
+         *     everything below it, shared vocabulary terms for example) are kept and
+         *     reported in `kept`. With `cascade: false` only the instance itself is
+         *     removed and its children are left in place. Use
+         *     `get_instance_deletion_preview` to see the sets before deleting.
          */
         post: operations["deleteInstance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/get_instance_deletion_preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what a cascading deletion of an instance would remove
+         * @description Read-only counterpart of `delete_instance`: the instances that would be
+         *     deleted (the requested one first), the reachable ones that would be kept,
+         *     and the surviving instances whose link would be removed.
+         */
+        get: operations["getInstanceDeletionPreview"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -643,6 +672,16 @@ export interface components {
         Error: {
             /** @description Human-readable error message. */
             error: string;
+        };
+        DeletionPreview: {
+            /** @description Identifier of the instance the deletion applies to. */
+            instance: string;
+            /** @description Identifiers the deletion removes, the requested instance first. */
+            deleted: string[];
+            /** @description Reachable instances kept because they are still reachable from outside the subtree (an instance linked from elsewhere, or a coupled system, plus everything below it). */
+            kept: string[];
+            /** @description Surviving instances whose link to the deleted instance is removed. */
+            unlinked_from: string[];
         };
         HealthOk: {
             /** @constant */
@@ -1398,6 +1437,11 @@ export interface operations {
                 "application/json": {
                     /** @description Identifier of the instance to delete. */
                     instance: string;
+                    /**
+                     * @description Also delete the instance's owned subtree.
+                     * @default true
+                     */
+                    cascade?: boolean;
                 };
             };
         };
@@ -1408,23 +1452,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    "application/json": components["schemas"]["DeletionPreview"] & {
                         /** @constant */
                         status: "success";
-                        /** @description Identifier of the deleted instance. */
-                        instance: string;
                     };
                 };
             };
-            /** @description Missing `instance` parameter, or the instance does not exist. */
-            400: {
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["UnexpectedError"];
+            503: components["responses"]["GraphDBUnavailable"];
+        };
+    };
+    getInstanceDeletionPreview: {
+        parameters: {
+            query: {
+                /**
+                 * @description Local instance identifier.
+                 * @example instance_550e8400-e29b-41d4-a716-446655440000
+                 */
+                instance: string;
+                /** @description Preview the cascading (default) or the single-instance deletion. */
+                cascade?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The deletion preview. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    "application/json": components["schemas"]["DeletionPreview"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             500: components["responses"]["UnexpectedError"];
             503: components["responses"]["GraphDBUnavailable"];
         };

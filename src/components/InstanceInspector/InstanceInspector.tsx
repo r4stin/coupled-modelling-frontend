@@ -15,11 +15,19 @@ import ExportKratosButton from '@/components/InstanceInspector/ExportKratosButto
 import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { toDeleteTarget } from '@/lib/deleteTargets';
+import { containedCount, deletionMessage, DeletionPreviewState, plural } from '@/lib/deletion';
 import { hasDistinctLabel } from '@/lib/styles';
 import { useExplorerRefresh } from '@/lib/useExplorerRefresh';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
 import { instanceDisplayName, valueDisplayLabel } from '@/lib/valueDisplay';
-import { deleteInstance, deleteValue, getInstancePropertyMetadata, instancesUrl } from '@/services/backend/instances';
+import {
+    deleteInstance,
+    deleteValue,
+    deletionPreviewUrl,
+    getInstanceDeletionPreview,
+    getInstancePropertyMetadata,
+    instancesUrl,
+} from '@/services/backend/instances';
 import { InstancePropertyGroup } from '@/types/backend';
 
 type Props = {
@@ -29,7 +37,8 @@ type Props = {
 
 type PropertyValueItem = InstancePropertyGroup['values'][number];
 
-type PendingDelete = ({ type: 'value'; property: string; value: PropertyValueItem } | { type: 'instance' }) & { deleting: boolean };
+// openedAt keys the deletion preview per dialog opening, so every opening fetches a fresh one.
+type PendingDelete = ({ type: 'value'; property: string; value: PropertyValueItem } | { type: 'instance'; openedAt: number }) & { deleting: boolean };
 
 /** The backend answers 400 for an unknown instance id (e.g. deleted, or a stale URL). */
 const isNotFound = (error: unknown) => error instanceof HTTPError && (error.response.status === 400 || error.response.status === 404);
@@ -38,8 +47,30 @@ const isNotFound = (error: unknown) => error instanceof HTTPError && (error.resp
 const InstanceInspector = ({ instanceId }: Props) => {
     const { data, error, isLoading } = useSWR([instancesUrl, instanceId], () => getInstancePropertyMetadata(instanceId));
     const { selectedClass, selectInstance, alignClassWithInstanceTypes, clearRemovedInstance } = useExplorerSelection();
-    const { refreshInstance, purgeInstance, refreshClassInstances } = useExplorerRefresh();
+    const { refreshInstance, purgeDeletedInstances, refreshClassInstances } = useExplorerRefresh();
     const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+    // Fetched only while the instance-delete dialog is open: what the cascade would remove.
+    const { data: deletionPreview, error: deletionPreviewError } = useSWR(
+        pendingDelete?.type === 'instance' ? [deletionPreviewUrl, instanceId, pendingDelete.openedAt] : null,
+        () => getInstanceDeletionPreview(instanceId),
+        {
+            shouldRetryOnError: false,
+            // The backend refuses the deletion outright (instance gone, or not a deletable
+            // individual): close the dialog, say why, and reload the inspector.
+            onError: (previewError: unknown) => {
+                if (isNotFound(previewError)) {
+                    setPendingDelete(null);
+                    getApiErrorMessage(previewError, 'This entry cannot be deleted').then(toast.danger);
+                    refreshInstance(instanceId).catch(() => undefined);
+                }
+            },
+        },
+    );
+    const previewState: DeletionPreviewState = deletionPreview
+        ? { status: 'ready', preview: deletionPreview }
+        : deletionPreviewError && !isNotFound(deletionPreviewError)
+          ? { status: 'error' }
+          : { status: 'loading' };
     // Row currently in inline-edit mode; its delete affordance is hidden meanwhile.
     const [editingKeys, setEditingKeys] = useState<ReadonlySet<string>>(new Set());
     const [isAddChildOpen, setIsAddChildOpen] = useState(false);
@@ -75,7 +106,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
             : pendingDelete.type === 'instance'
               ? {
                     title: 'Delete instance',
-                    message: `Are you sure you want to permanently delete instance ${instanceDisplay} from the knowledge base?`,
+                    message: deletionMessage(instanceDisplay, previewState),
                 }
               : {
                     title: 'Delete value',
@@ -87,19 +118,23 @@ const InstanceInspector = ({ instanceId }: Props) => {
             return;
         }
         setPendingDelete({ ...pendingDelete, deleting: true });
-        const affectedClasses = [...(data?.types ?? []), ...(selectedClass ? [selectedClass] : [])];
         try {
             if (pendingDelete.type === 'value') {
                 await deleteValue(instanceId, pendingDelete.property, toDeleteTarget(pendingDelete.value));
                 toast.success(`Deleted ${pendingDelete.property} "${valueDisplayLabel(pendingDelete.value)}"`);
-                await refreshInstance(instanceId);
+                await refreshAfterMutation();
             } else {
-                await deleteInstance(instanceId);
-                toast.success(`Instance ${instanceDisplay} deleted`);
-                purgeInstance(instanceId);
+                const result = await deleteInstance(instanceId);
+                const contained = containedCount(result);
+                toast.success(
+                    contained > 0
+                        ? `Instance ${instanceDisplay} deleted with ${plural(contained, 'contained instance')}`
+                        : `Instance ${instanceDisplay} deleted`,
+                );
+                // Clear the selection first so the pane unmounts before its cache entry goes.
                 clearRemovedInstance();
+                purgeDeletedInstances(result.deleted, result.unlinked_from).catch(() => undefined);
             }
-            refreshClassInstances(affectedClasses).catch(() => undefined);
             setPendingDelete(null);
         } catch (deleteError) {
             toast.danger(await getApiErrorMessage(deleteError, 'Delete failed'));
@@ -129,7 +164,11 @@ const InstanceInspector = ({ instanceId }: Props) => {
                                 <Button size="sm" variant="primary" onPress={() => setIsAddChildOpen(true)}>
                                     Add child
                                 </Button>
-                                <Button size="sm" variant="danger-soft" onPress={() => setPendingDelete({ type: 'instance', deleting: false })}>
+                                <Button
+                                    size="sm"
+                                    variant="danger-soft"
+                                    onPress={() => setPendingDelete({ type: 'instance', deleting: false, openedAt: Date.now() })}
+                                >
                                     Delete instance
                                 </Button>
                             </div>
@@ -242,6 +281,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
                         title={dialogContent.title}
                         message={dialogContent.message}
                         isPending={pendingDelete?.deleting ?? false}
+                        isConfirmDisabled={pendingDelete?.type === 'instance' && previewState.status === 'loading'}
                         onConfirm={confirmDelete}
                         onCancel={() => setPendingDelete(null)}
                     />

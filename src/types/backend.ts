@@ -28,6 +28,8 @@ export type ObjectPropertyValue = components['schemas']['ObjectPropertyValue'];
 export type LiteralPropertyValue = components['schemas']['LiteralPropertyValue'];
 
 export type DeleteValueTarget = components['schemas']['ObjectValueTarget'] | components['schemas']['LiteralValueTarget'];
+export type InstanceDeletionPreview = components['schemas']['DeletionPreview'];
+export type DeleteInstanceResult = operations['deleteInstance']['responses'][200]['content']['application/json'];
 
 export type InstanceId = components['schemas']['InstanceId'];
 export type PropertyDataMap = components['schemas']['PropertyDataMap'];
