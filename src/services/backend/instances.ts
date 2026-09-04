@@ -1,16 +1,19 @@
-import { normalizeDeletionPreview } from '@/lib/deletion';
+import { normalizeDeletionPreview, normalizeUnlinkResult } from '@/lib/deletion';
 import { backendApi } from '@/services/backend/api';
 import {
     DeleteInstanceResult,
+    DeleteValueResult,
     DeleteValueTarget,
     InstanceDeletionPreview,
     InstanceId,
     InstancePropertyMetadata,
     PropertyDataMap,
+    UnlinkResult,
 } from '@/types/backend';
 
 export const instancesUrl = 'get_instance_property_metadata/';
 export const deletionPreviewUrl = 'get_instance_deletion_preview/';
+export const valueDeletionPreviewUrl = 'get_value_deletion_preview/';
 
 export const getInstancePropertyMetadata = (instance: string) =>
     backendApi.get(instancesUrl, { searchParams: { instance } }).json<InstancePropertyMetadata>();
@@ -21,8 +24,15 @@ export const getInstanceDeletionPreview = (instance: string) =>
         .json<InstanceDeletionPreview>()
         .then((preview) => normalizeDeletionPreview(instance, preview));
 
-export const deleteValue = (instance: string, property: string, value: DeleteValueTarget) =>
-    backendApi.post('delete_value/', { json: { instance, property, value } });
+export const getValueDeletionPreview = (instance: string, property: string, target: string) =>
+    backendApi.get(valueDeletionPreviewUrl, { searchParams: { instance, property, target } }).json<UnlinkResult>().then(normalizeUnlinkResult);
+
+/** Deletes the value; an unlinked instance goes with its owned subtree when nothing else reaches it. */
+export const deleteValue = (instance: string, property: string, value: DeleteValueTarget): Promise<DeleteValueResult> =>
+    backendApi
+        .post('delete_value/', { json: { instance, property, value, cascade: true } })
+        .json<DeleteValueResult>()
+        .then((result) => ({ status: 'success', ...normalizeUnlinkResult(result) }));
 
 /** Deletes the instance together with its owned subtree. */
 export const deleteInstance = (instance: string): Promise<DeleteInstanceResult> =>

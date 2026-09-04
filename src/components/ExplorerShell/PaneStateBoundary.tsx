@@ -1,7 +1,9 @@
 'use client';
 
-import { Alert, EmptyState, Spinner } from '@heroui/react';
+import { EmptyState, Spinner } from '@heroui/react';
 import { FC, ReactNode } from 'react';
+
+import ErrorAlert from '@/components/ErrorAlert/ErrorAlert';
 
 type Props = {
     isLoading: boolean;
@@ -24,15 +26,7 @@ const PaneStateBoundary: FC<Props> = ({ isLoading, loadingLabel, hasError, error
         );
     }
     if (hasError) {
-        return (
-            <Alert status="danger" className="m-2">
-                <Alert.Indicator />
-                <Alert.Content>
-                    <Alert.Title>{errorTitle}</Alert.Title>
-                    <Alert.Description>Check the backend connection, then refresh.</Alert.Description>
-                </Alert.Content>
-            </Alert>
-        );
+        return <ErrorAlert role="status" className="m-2" title={errorTitle} description="Check the backend connection, then refresh." />;
     }
     if (isEmpty) {
         return <EmptyState className="m-4">{emptyMessage}</EmptyState>;

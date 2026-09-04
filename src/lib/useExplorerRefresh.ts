@@ -3,7 +3,7 @@
 import { useSWRConfig } from 'swr';
 
 import { classInstanceSummariesUrl } from '@/services/backend/classes';
-import { deletionPreviewUrl, instancesUrl } from '@/services/backend/instances';
+import { deletionPreviewUrl, instancesUrl, valueDeletionPreviewUrl } from '@/services/backend/instances';
 import { searchUrl } from '@/services/backend/search';
 import { ClassInstanceSummary } from '@/types/backend';
 
@@ -30,10 +30,13 @@ export const useExplorerRefresh = () => {
         purgeDeletedInstances: (deletedIds: string[], unlinkedIds: string[] = []) => {
             const gone = new Set([...deletedIds, ...unlinkedIds]);
             const deleted = new Set(deletedIds);
+            // Inspector and preview keys carry instance ids after the URL; any gone id evicts the entry.
+            const isGone = (key: unknown) =>
+                Array.isArray(key) &&
+                [instancesUrl, deletionPreviewUrl, valueDeletionPreviewUrl].includes(key[0]) &&
+                key.slice(1).some((part) => gone.has(part as string));
             return Promise.all([
-                mutate((key) => (isKeyOf(key, instancesUrl) || isKeyOf(key, deletionPreviewUrl)) && gone.has(key[1] as string), undefined, {
-                    revalidate: false,
-                }),
+                mutate(isGone, undefined, { revalidate: false }),
                 mutate(
                     (key) => isKeyOf(key, classInstanceSummariesUrl),
                     (list?: ClassInstanceSummary[]) => list?.filter((summary) => !deleted.has(summary.id)),

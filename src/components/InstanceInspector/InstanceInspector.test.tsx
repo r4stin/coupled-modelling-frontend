@@ -1,16 +1,24 @@
+import { toast } from '@heroui/react';
 import userEvent from '@testing-library/user-event';
 import { HTTPError } from 'ky';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import InstanceInspector from '@/components/InstanceInspector/InstanceInspector';
-import { deleteInstance, deleteValue, getInstanceDeletionPreview, getInstancePropertyMetadata } from '@/services/backend/instances';
-import { render, screen, waitFor } from '@/testUtils';
+import {
+    deleteInstance,
+    deleteValue,
+    getInstanceDeletionPreview,
+    getInstancePropertyMetadata,
+    getValueDeletionPreview,
+} from '@/services/backend/instances';
+import { act, render, screen, waitFor } from '@/testUtils';
 import { InstancePropertyMetadata } from '@/types/backend';
 
 vi.mock('@/services/backend/instances', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/services/backend/instances')>()),
     getInstancePropertyMetadata: vi.fn(),
     getInstanceDeletionPreview: vi.fn(),
+    getValueDeletionPreview: vi.fn(),
     deleteValue: vi.fn(),
     deleteInstance: vi.fn(),
 }));
@@ -25,6 +33,10 @@ const mockMetadata = vi.mocked(getInstancePropertyMetadata);
 const mockDeleteValue = vi.mocked(deleteValue);
 const mockDeleteInstance = vi.mocked(deleteInstance);
 const mockDeletionPreview = vi.mocked(getInstanceDeletionPreview);
+const mockUnlinkPreview = vi.mocked(getValueDeletionPreview);
+
+const literalDeletion = { status: 'success' as const, target: null, deleted: [], kept: [] };
+const keptTargetDeletion = { status: 'success' as const, target: 'instance_9', deleted: [], kept: ['instance_9'] };
 
 const metadata: InstancePropertyMetadata = {
     id: 'instance_1',
@@ -68,12 +80,18 @@ const metadata: InstancePropertyMetadata = {
     ],
 };
 
-const notFoundError = () => new HTTPError(new Response('', { status: 400 }), new Request('http://localhost/'), {} as never);
+const httpError = (status: number, body = '') => new HTTPError(new Response(body, { status }), new Request('http://localhost/'), {} as never);
+const notFoundError = () => httpError(400);
 
 /** Preview of a leaf instance: nothing contained, nothing kept, no other links. */
 const leafPreview = { instance: 'instance_1', deleted: ['instance_1'], kept: [], unlinked_from: [] };
 
 describe('InstanceInspector', () => {
+    // The toast queue is module-global; drain it so one test's toast cannot satisfy the next test's assertion.
+    afterEach(() => {
+        act(() => toast.clear());
+    });
+
     it('renders the header (label, id, type chips) and the property table', async () => {
         mockMetadata.mockResolvedValue(metadata);
         render(<InstanceInspector instanceId="instance_1" />);
@@ -181,30 +199,116 @@ describe('InstanceInspector', () => {
 
     it('deletes a literal value after confirmation with the exact typed payload', async () => {
         mockMetadata.mockResolvedValue(metadata);
-        mockDeleteValue.mockResolvedValue(undefined as never);
+        mockDeleteValue.mockResolvedValue(literalDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete echo_level value 1' }));
         expect(await screen.findByText('Are you sure you want to delete echo_level "1"?')).toBeInTheDocument();
+        // Literals link nothing, so no unlink preview is fetched.
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+        expect(mockUnlinkPreview).not.toHaveBeenCalled();
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'echo_level', {
             kind: 'literal',
             value: 1,
             datatype: 'http://www.w3.org/2001/XMLSchema#integer',
         });
+        expect(await screen.findByText('Deleted echo_level "1"')).toBeInTheDocument();
     });
 
-    it('deletes an object value with the object-target payload', async () => {
+    it('deletes an object value with the object-target payload once the preview says the target stays', async () => {
         mockMetadata.mockResolvedValue(metadata);
-        mockDeleteValue.mockResolvedValue(undefined as never);
+        mockUnlinkPreview.mockResolvedValue({ target: 'instance_9', deleted: [], kept: ['instance_9'] });
+        mockDeleteValue.mockResolvedValue(keptTargetDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(
+            await screen.findByText(
+                'Are you sure you want to delete data "Fluid mesh (instance_9)"? The linked instance stays in the knowledge base.',
+            ),
+        ).toBeInTheDocument();
+        expect(mockUnlinkPreview).toHaveBeenCalledWith('instance_1', 'data', 'instance_9');
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'data', { kind: 'object', id: 'instance_9' });
+        expect(await screen.findByText('Deleted data "Fluid mesh (instance_9)"')).toBeInTheDocument();
+    });
+
+    it('spells out the collection of an orphaned link target and reports it afterwards', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        // The holder (instance_1) reached through a back-link is kept but never counted.
+        const collected = { target: 'instance_9', deleted: ['instance_9', 'instance_10'], kept: ['instance_1'] };
+        mockUnlinkPreview.mockResolvedValue(collected);
+        mockDeleteValue.mockResolvedValue({ status: 'success', ...collected });
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(
+            await screen.findByText(
+                'Are you sure you want to delete data "Fluid mesh (instance_9)"? Nothing else links to the linked instance, so it will be deleted as well, together with the 1 instance it contains.',
+            ),
+        ).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(
+            await screen.findByText('Deleted data "Fluid mesh (instance_9)" and the linked instance with 1 contained instance'),
+        ).toBeInTheDocument();
+    });
+
+    it('keeps the value dialog open and reports the backend error when the deletion fails', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockUnlinkPreview.mockResolvedValue({ target: 'instance_9', deleted: [], kept: ['instance_9'] });
+        mockDeleteValue.mockRejectedValue(new Error('GraphDB unavailable'));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        await screen.findByText(/The linked instance stays in the knowledge base\./);
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(await screen.findByText('GraphDB unavailable')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+        expect(mockUnlinkPreview).toHaveBeenCalledTimes(1);
+    });
+
+    it('asks the plain question and removes only the link when the backend has no preview route (older backend)', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockUnlinkPreview.mockRejectedValue(httpError(404, '<html>Not Found</html>'));
+        mockDeleteValue.mockResolvedValue(literalDeletion);
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(await screen.findByText('Are you sure you want to delete data "Fluid mesh (instance_9)"?')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'data', { kind: 'object', id: 'instance_9' });
+        expect(await screen.findByText('Deleted data "Fluid mesh (instance_9)"')).toBeInTheDocument();
+    });
+
+    it('blocks confirming an object value deletion while its preview is still loading', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockUnlinkPreview.mockReturnValue(new Promise(() => undefined));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(await screen.findByText('Checking what deleting data "Fluid mesh (instance_9)" would remove…')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+        expect(mockDeleteValue).not.toHaveBeenCalled();
+    });
+
+    it('falls back to a generic cascade warning when the unlink preview fails', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockUnlinkPreview.mockRejectedValue(new Error('GraphDB unavailable'));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(
+            await screen.findByText(/If nothing else links to it, the linked instance and everything it contains will be deleted as well\./),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    });
+
+    it('closes the value dialog and explains when the backend refuses the unlink preview', async () => {
+        mockMetadata.mockResolvedValue(metadata);
+        mockUnlinkPreview.mockRejectedValue(httpError(400, JSON.stringify({ error: 'Subject instance instance_1 does not exist in GraphDB.' })));
+        render(<InstanceInspector instanceId="instance_1" />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
+        expect(await screen.findByText('Subject instance instance_1 does not exist in GraphDB.')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument());
     });
 
     it('includes the language tag when deleting a language-tagged literal', async () => {
         mockMetadata.mockResolvedValue(metadata);
-        mockDeleteValue.mockResolvedValue(undefined as never);
+        mockDeleteValue.mockResolvedValue(literalDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete comment value Ein Löser' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
@@ -303,11 +407,7 @@ describe('InstanceInspector', () => {
 
     it('closes the dialog and explains when the backend refuses the deletion but the entry still loads', async () => {
         mockMetadata.mockResolvedValue(metadata);
-        const refused = new HTTPError(
-            new Response(JSON.stringify({ error: 'Instance instance_1 does not exist in GraphDB.' }), { status: 400 }),
-            new Request('http://localhost/'),
-            {} as never,
-        );
+        const refused = httpError(400, JSON.stringify({ error: 'Instance instance_1 does not exist in GraphDB.' }));
         mockDeletionPreview.mockRejectedValue(refused);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));

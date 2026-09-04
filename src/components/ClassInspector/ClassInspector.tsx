@@ -1,11 +1,12 @@
 'use client';
 
-import { Alert, Spinner } from '@heroui/react';
+import { Spinner } from '@heroui/react';
 import { FC, ReactNode, useState } from 'react';
 import useSWR from 'swr';
 
 import { ClassNavLinkList } from '@/components/ClassInspector/ClassNavLink';
 import RestrictionItem from '@/components/ClassInspector/RestrictionItem';
+import ErrorAlert from '@/components/ErrorAlert/ErrorAlert';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
 import { classMetadataUrl, getClassMetadata } from '@/services/backend/classes';
 import { NamedReference, Restriction } from '@/types/backend';
@@ -70,13 +71,12 @@ const ClassInspector = ({ classId }: Props) => {
     } else if (!data) {
         // Non-fatal: the instance list below stays usable without the metadata card.
         content = (
-            <Alert status="warning">
-                <Alert.Indicator />
-                <Alert.Content>
-                    <Alert.Title>Could not load the class details</Alert.Title>
-                    <Alert.Description>Check the backend connection, then refresh.</Alert.Description>
-                </Alert.Content>
-            </Alert>
+            <ErrorAlert
+                status="warning"
+                role="status"
+                title="Could not load the class details"
+                description="Check the backend connection, then refresh."
+            />
         );
     } else {
         content = (

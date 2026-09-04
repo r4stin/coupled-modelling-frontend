@@ -290,7 +290,7 @@ export interface paths {
         put?: never;
         /**
          * Atomically replace one specific property value (direct SPARQL)
-         * @description Replaces one stored value with another in a single SPARQL update. The old value is matched by value equality (dangling references allowed); the new value keeps its exact datatype and language tag. When the old value no longer exists, the update is a no-op.
+         * @description Replaces one stored value with another in a single SPARQL update. The old value is matched by value equality (dangling references allowed); the new value keeps its exact datatype and language tag. When the old value no longer exists, the update is a no-op. Replacing an object value removes the old link only; the previous target is not garbage-collected.
          */
         post: operations["replaceValue"];
         delete?: never;
@@ -308,8 +308,39 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Delete a single property value (direct SPARQL) */
+        /**
+         * Delete a single property value (direct SPARQL)
+         * @description Removes the triple. When the value is an object link and `cascade` is set
+         *     (the default), the linked instance's owned subtree is deleted as well if
+         *     nothing else reaches it afterwards: the same ownership rule as
+         *     `delete_instance`. A coupled system, a target still linked from elsewhere,
+         *     a link that is not stored, and the instance holding the link are never
+         *     collected. The removal and the collection run in one transactional
+         *     update. Use `get_value_deletion_preview` to see the outcome first.
+         */
         post: operations["deleteValue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/get_value_deletion_preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what removing an object link would delete
+         * @description Read-only counterpart of `delete_value` for an object link: whether the
+         *     linked instance would be deleted with its owned subtree (nothing else
+         *     reaches it afterwards) or kept.
+         */
+        get: operations["getValueDeletionPreview"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -325,7 +356,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Delete all values of the given properties (direct SPARQL) */
+        /**
+         * Delete all values of the given properties (direct SPARQL)
+         * @description Removes the triples only; unlinked instances are not garbage-collected.
+         */
         post: operations["deleteValues"];
         delete?: never;
         options?: never;
@@ -673,15 +707,22 @@ export interface components {
             /** @description Human-readable error message. */
             error: string;
         };
-        DeletionPreview: {
+        /** @description What a deletion removes and what it leaves in place. */
+        DeletionSets: {
+            /** @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected. */
+            deleted: string[];
+            /** @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it). */
+            kept: string[];
+        };
+        DeletionPreview: components["schemas"]["DeletionSets"] & {
             /** @description Identifier of the instance the deletion applies to. */
             instance: string;
-            /** @description Identifiers the deletion removes, the requested instance first. */
-            deleted: string[];
-            /** @description Reachable instances kept because they are still reachable from outside the subtree (an instance linked from elsewhere, or a coupled system, plus everything below it). */
-            kept: string[];
             /** @description Surviving instances whose link to the deleted instance is removed. */
             unlinked_from: string[];
+        };
+        UnlinkResult: components["schemas"]["DeletionSets"] & {
+            /** @description The unlinked instance, or null when the value was a literal. It appears in `deleted` when collected, in `kept` when it survives (still linked from elsewhere, a coupled system, the link holder itself, `cascade` off, or the link was not stored), and in neither when it is not an individual (a dangling reference or a class). The instance holding the link is never collected; it is listed in `kept` when the target is collected and a link below the target leads back to it. */
+            target: string | null;
         };
         HealthOk: {
             /** @constant */
@@ -1206,7 +1247,7 @@ export interface operations {
                     "application/json": components["schemas"]["InstanceMetadata"];
                 };
             };
-            /** @description Missing `instance` parameter, or the instance does not exist. */
+            /** @description Missing `instance` parameter, or the identifier is not an existing individual (classes and properties do not count). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -1385,11 +1426,63 @@ export interface operations {
                     property: string;
                     /** @description The value to delete. The typed forms delete the exact triple (correct datatype serialization); a bare scalar is matched by serialization guess. */
                     value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"] | components["schemas"]["ScalarValue"];
+                    /**
+                     * @description Also delete the unlinked instance's owned subtree when nothing else reaches it.
+                     * @default true
+                     */
+                    cascade?: boolean;
                 };
             };
         };
         responses: {
-            201: components["responses"]["EmptyCreated"];
+            /** @description The value was deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnlinkResult"] & {
+                        /** @constant */
+                        status: "success";
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["UnexpectedError"];
+            503: components["responses"]["GraphDBUnavailable"];
+        };
+    };
+    getValueDeletionPreview: {
+        parameters: {
+            query: {
+                /**
+                 * @description Identifier of the instance holding the link.
+                 * @example instance_550e8400-e29b-41d4-a716-446655440000
+                 */
+                instance: string;
+                /**
+                 * @description Property name (without the `has_` prefix).
+                 * @example solver_settings
+                 */
+                property: string;
+                /** @description Identifier of the linked instance. */
+                target: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The unlink preview. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnlinkResult"];
+                };
+            };
             400: components["responses"]["BadRequest"];
             500: components["responses"]["UnexpectedError"];
             503: components["responses"]["GraphDBUnavailable"];

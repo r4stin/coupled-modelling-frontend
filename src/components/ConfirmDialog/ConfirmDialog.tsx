@@ -29,10 +29,9 @@ const ConfirmDialog: FC<Props> = ({
     onConfirm,
     onCancel,
 }) => {
-    // Retain the last shown content so the close animation doesn't flash empty text
-    // when the caller clears its pending state on success (render-phase adjustment).
+    // Retains the last content through the close animation and freezes it while the action runs (render-phase adjustment).
     const [content, setContent] = useState({ title, message });
-    if (isOpen && (content.title !== title || content.message !== message)) {
+    if (isOpen && !isPending && (content.title !== title || content.message !== message)) {
         setContent({ title, message });
     }
     const messageId = useId();

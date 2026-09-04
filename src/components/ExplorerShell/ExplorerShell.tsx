@@ -27,13 +27,17 @@ const ExplorerShell = () => {
     return (
         <PanelGroup direction="horizontal" autoSaveId="cm-explorer-panes" className="min-h-0 flex-1">
             <Panel defaultSize={22} minSize={14}>
-                <ExplorerPane title="Class Hierarchy">
+                <ExplorerPane title="Class Hierarchy" resetKey={selectedClass}>
                     <ClassTree />
                 </ExplorerPane>
             </Panel>
             <PaneResizeHandle />
             <Panel defaultSize={38} minSize={20}>
-                <ExplorerPane title={instancesTitle} actions={selectedClass ? <CreateClassInstance classId={selectedClass} /> : undefined}>
+                <ExplorerPane
+                    title={instancesTitle}
+                    actions={selectedClass ? <CreateClassInstance classId={selectedClass} /> : undefined}
+                    resetKey={selectedClass}
+                >
                     {selectedClass ? (
                         // Natural heights inside ExplorerPane's single scroll region: a tall
                         // metadata card scrolls away instead of squeezing the list out.
@@ -48,7 +52,7 @@ const ExplorerShell = () => {
             </Panel>
             <PaneResizeHandle />
             <Panel defaultSize={40} minSize={20}>
-                <ExplorerPane title="Instance Inspector">
+                <ExplorerPane title="Instance Inspector" resetKey={selectedInstance}>
                     {selectedInstance ? (
                         // Keyed so per-instance UI state (form drafts, edit mode,
                         // open dialogs) never survives navigating to another instance.
