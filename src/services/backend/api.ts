@@ -1,11 +1,11 @@
 import ky from 'ky';
 
 /**
- * HTTP client for the coupled_modelling Flask backend.
+ * HTTP client for the coupled_modelling backend.
  * All backend calls go through service files in src/services/backend/,
  * one file per resource type.
  *
- * Note: Flask routes end with a trailing slash (e.g. `health/`).
+ * Note: backend routes end with a trailing slash (e.g. `health/`); a slash-less path is only redirected.
  */
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1.0').replace(/\/+$/, '');
 

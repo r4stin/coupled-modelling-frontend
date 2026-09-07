@@ -1,9 +1,10 @@
 /**
- * Types for the coupled_modelling Flask API responses.
+ * Types for the coupled_modelling API responses.
  *
- * Aliases over the types generated from the backend's OpenAPI spec
- * (coupled_modelling/openapi.yaml). Regenerate with `npm run generate:api-types`
- * after the spec changes — do not edit src/types/openapi.ts by hand.
+ * Aliases over the types generated from the backend's OpenAPI document
+ * (served at /api/v1.0/openapi.yaml, committed as coupled_modelling/openapi.yaml).
+ * Regenerate with `npm run generate:api-types` after the backend changes — do not
+ * edit src/types/openapi.ts by hand.
  */
 import type { components, operations } from '@/types/openapi';
 

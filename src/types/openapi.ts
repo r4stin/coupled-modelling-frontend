@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/openapi.yaml": {
+    "/api/v1.0/openapi.yaml": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,9 +13,7 @@ export interface paths {
         };
         /**
          * Download this OpenAPI specification
-         * @description Serves this `openapi.yaml` document from the running backend, so
-         *     clients and tooling can generate typed bindings without a copy of the
-         *     repository.
+         * @description Serves the OpenAPI document generated from the running backend, so clients and tooling can generate typed bindings without a copy of the repository.
          */
         get: operations["getOpenApiSpec"];
         put?: never;
@@ -26,7 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health/": {
+    "/api/v1.0/health/": {
         parameters: {
             query?: never;
             header?: never;
@@ -46,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_hierarchy_metadata/": {
+    "/api/v1.0/get_class_hierarchy_metadata/": {
         parameters: {
             query?: never;
             header?: never;
@@ -55,9 +53,8 @@ export interface paths {
         };
         /**
          * List all ontology classes with their direct parents
-         * @description Returns every project-local OWL class together with the list of its
-         *     direct named superclasses. The frontend builds the class tree from the
-         *     parent arrays (classes with an empty `parents` array are roots).
+         * @description Returns every project-local OWL class together with the list of its direct named superclasses.
+         *     The frontend builds the class tree from the parent arrays (classes with an empty `parents` array are roots).
          */
         get: operations["getClassHierarchyMetadata"];
         put?: never;
@@ -68,7 +65,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/search/": {
+    "/api/v1.0/search/": {
         parameters: {
             query?: never;
             header?: never;
@@ -77,10 +74,9 @@ export interface paths {
         };
         /**
          * Search classes and instances by name or label
-         * @description Case-insensitive substring search over the local names and labels of
-         *     project classes and instances. Each result group is capped at `limit`;
-         *     matches on a name prefix rank before other matches. Instance results
-         *     carry the same summary shape as `get_class_instance_summaries`.
+         * @description Case-insensitive substring search over the local names and labels of project classes and instances.
+         *     Each result group is capped at `limit`; matches on a name prefix rank before other matches.
+         *     Instance results carry the same summary shape as `get_class_instance_summaries`.
          */
         get: operations["searchEntities"];
         put?: never;
@@ -91,7 +87,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_instance_summaries/": {
+    "/api/v1.0/get_class_instance_summaries/": {
         parameters: {
             query?: never;
             header?: never;
@@ -100,13 +96,10 @@ export interface paths {
         };
         /**
          * List instance summaries for a class
-         * @description Returns one summary per instance of the given class (including
-         *     instances of its subclasses, via `rdf:type/rdfs:subClassOf*`). Each
-         *     summary carries the resolved preferred label (English first, then
-         *     untagged, then other languages), the direct types, and a compact
-         *     preview of up to three property values for display under the instance
-         *     title. When `class` is omitted, summaries for all instances are
-         *     returned.
+         * @description Returns one summary per instance of the given class (including instances of its subclasses, via
+         *     `rdf:type/rdfs:subClassOf*`). Each summary carries the resolved preferred label (English first, then
+         *     untagged, then other languages), the direct types, and a compact preview of up to three property
+         *     values for display under the instance title. When `class` is omitted, summaries for all instances are returned.
          */
         get: operations["getClassInstanceSummaries"];
         put?: never;
@@ -117,7 +110,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_metadata/": {
+    "/api/v1.0/get_class_metadata/": {
         parameters: {
             query?: never;
             header?: never;
@@ -126,12 +119,10 @@ export interface paths {
         };
         /**
          * Get class descriptions, hierarchy links and restriction axioms
-         * @description Returns metadata backing the class inspector pane: `rdfs:comment` /
-         *     `skos:definition` descriptions, direct superclasses and subclasses,
-         *     named equivalent classes, and the OWL restriction axioms asserted on
-         *     the class (existential/universal/value restrictions and unqualified or
-         *     qualified cardinality restrictions, including intersection targets
-         *     expanded into their named member classes).
+         * @description Returns metadata backing the class inspector pane: `rdfs:comment` / `skos:definition` descriptions,
+         *     direct superclasses and subclasses, named equivalent classes, and the OWL restriction axioms asserted on
+         *     the class (existential/universal/value restrictions and unqualified or qualified cardinality restrictions,
+         *     including intersection targets expanded into their named member classes).
          */
         get: operations["getClassMetadata"];
         put?: never;
@@ -142,7 +133,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_instance_property_metadata/": {
+    "/api/v1.0/get_instance_property_metadata/": {
         parameters: {
             query?: never;
             header?: never;
@@ -151,10 +142,9 @@ export interface paths {
         };
         /**
          * Get an instance's direct properties with type metadata
-         * @description Returns the direct outgoing statements of an instance, grouped per
-         *     property and sorted, with each value tagged as an `object` reference
-         *     (id plus resolved label) or a typed `literal` (JSON-native value plus
-         *     XSD datatype). Property names are returned without the `has_` prefix.
+         * @description Returns the direct outgoing statements of an instance, grouped per property and sorted, with each value
+         *     tagged as an `object` reference (id plus resolved label) or a typed `literal` (JSON-native value plus XSD
+         *     datatype). Property names are returned without the `has_` prefix.
          */
         get: operations["getInstancePropertyMetadata"];
         put?: never;
@@ -165,7 +155,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/create_instance/": {
+    "/api/v1.0/get_value_deletion_preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what removing an object link would delete
+         * @description Read-only counterpart of `delete_value` for an object link: whether the linked instance would be deleted
+         *     with its owned subtree (nothing else reaches it afterwards) or kept.
+         */
+        get: operations["getValueDeletionPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1.0/get_instance_deletion_preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what a cascading deletion of an instance would remove
+         * @description Read-only counterpart of `delete_instance`: the instances that would be deleted (the requested one first),
+         *     the reachable ones that would be kept, and the surviving instances whose link would be removed.
+         */
+        get: operations["getInstanceDeletionPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1.0/create_instance/": {
         parameters: {
             query?: never;
             header?: never;
@@ -176,12 +208,10 @@ export interface paths {
         put?: never;
         /**
          * Create an instance linked to a parent (direct SPARQL)
-         * @description Creates a new UUID-named instance of class `property`, links it to the
-         *     existing `parent` instance via the corresponding `has_<property>`
-         *     object property, and optionally asserts initial property values from
-         *     `data`. String values that match the label of an existing instance of
-         *     the property's class are resolved to object references; creating
-         *     nested individuals inline is rejected.
+         * @description Creates a new UUID-named instance of class `property`, links it to the existing `parent` instance via the
+         *     corresponding `has_<property>` object property, and optionally asserts initial property values from `data`.
+         *     String values that match the label of an existing instance of the property's class are resolved to object
+         *     references; creating nested individuals inline is rejected.
          */
         post: operations["createInstance"];
         delete?: never;
@@ -190,7 +220,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/create_class_instance/": {
+    "/api/v1.0/create_class_instance/": {
         parameters: {
             query?: never;
             header?: never;
@@ -210,7 +240,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/add_values/": {
+    "/api/v1.0/add_values/": {
         parameters: {
             query?: never;
             header?: never;
@@ -221,12 +251,10 @@ export interface paths {
         put?: never;
         /**
          * Add property values to an instance (direct SPARQL)
-         * @description Inserts the given property values for an existing instance in a single
-         *     SPARQL update transaction. List values produce one triple per element.
-         *     Plain string values are kept as literals for datatype properties; for
-         *     object properties they are resolved to an existing instance of the
-         *     property's class by label, or a new labeled instance is created when no
-         *     match exists. Explicit `instance*` references must already exist.
+         * @description Inserts the given property values for an existing instance in a single SPARQL update transaction. List
+         *     values produce one triple per element. Plain string values are kept as literals for datatype properties; for
+         *     object properties they are resolved to an existing instance of the property's class by label, or a new labeled
+         *     instance is created when no match exists. Explicit `instance*` references must already exist.
          */
         post: operations["addValues"];
         delete?: never;
@@ -235,7 +263,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/replace_values/": {
+    "/api/v1.0/replace_values/": {
         parameters: {
             query?: never;
             header?: never;
@@ -246,9 +274,8 @@ export interface paths {
         put?: never;
         /**
          * Replace property values on an instance (direct SPARQL)
-         * @description Replaces the existing values of each property in `data` with the given
-         *     new values in a single SPARQL update transaction. An empty list (`[]`)
-         *     removes all values of that property.
+         * @description Replaces the existing values of each property in `data` with the given new values in a single SPARQL update
+         *     transaction. An empty list (`[]`) removes all values of that property.
          */
         post: operations["replaceValues"];
         delete?: never;
@@ -257,7 +284,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/replace_properties/": {
+    "/api/v1.0/replace_properties/": {
         parameters: {
             query?: never;
             header?: never;
@@ -268,9 +295,8 @@ export interface paths {
         put?: never;
         /**
          * Replace an instance's property set (direct SPARQL)
-         * @description Removes the instance's existing `has_*` and `rdfs:label` statements and
-         *     asserts the given data instead, preserving structural metadata
-         *     (`rdf:type`, `rdfs:comment`).
+         * @description Removes the instance's existing `has_*` and `rdfs:label` statements and asserts the given data instead,
+         *     preserving structural metadata (`rdf:type`, `rdfs:comment`).
          */
         post: operations["replaceProperties"];
         delete?: never;
@@ -279,7 +305,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/replace_value/": {
+    "/api/v1.0/replace_value/": {
         parameters: {
             query?: never;
             header?: never;
@@ -290,7 +316,10 @@ export interface paths {
         put?: never;
         /**
          * Atomically replace one specific property value (direct SPARQL)
-         * @description Replaces one stored value with another in a single SPARQL update. The old value is matched by value equality (dangling references allowed); the new value keeps its exact datatype and language tag. When the old value no longer exists, the update is a no-op. Replacing an object value removes the old link only; the previous target is not garbage-collected.
+         * @description Replaces one stored value with another in a single SPARQL update. The old value is matched by value equality
+         *     (dangling references allowed); the new value keeps its exact datatype and language tag. When the old value no
+         *     longer exists, the update is a no-op. Replacing an object value removes the old link only; the previous target
+         *     is not garbage-collected.
          */
         post: operations["replaceValue"];
         delete?: never;
@@ -299,7 +328,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/delete_value/": {
+    "/api/v1.0/delete_value/": {
         parameters: {
             query?: never;
             header?: never;
@@ -310,13 +339,11 @@ export interface paths {
         put?: never;
         /**
          * Delete a single property value (direct SPARQL)
-         * @description Removes the triple. When the value is an object link and `cascade` is set
-         *     (the default), the linked instance's owned subtree is deleted as well if
-         *     nothing else reaches it afterwards: the same ownership rule as
-         *     `delete_instance`. A coupled system, a target still linked from elsewhere,
-         *     a link that is not stored, and the instance holding the link are never
-         *     collected. The removal and the collection run in one transactional
-         *     update. Use `get_value_deletion_preview` to see the outcome first.
+         * @description Removes the triple. When the value is an object link and `cascade` is set (the default), the linked instance's
+         *     owned subtree is deleted as well if nothing else reaches it afterwards: the same ownership rule as
+         *     `delete_instance`. A coupled system, a target still linked from elsewhere, a link that is not stored, and the
+         *     instance holding the link are never collected. The removal and the collection run in one transactional update.
+         *     Use `get_value_deletion_preview` to see the outcome first.
          */
         post: operations["deleteValue"];
         delete?: never;
@@ -325,29 +352,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_value_deletion_preview/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Preview what removing an object link would delete
-         * @description Read-only counterpart of `delete_value` for an object link: whether the
-         *     linked instance would be deleted with its owned subtree (nothing else
-         *     reaches it afterwards) or kept.
-         */
-        get: operations["getValueDeletionPreview"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/delete_values/": {
+    "/api/v1.0/delete_values/": {
         parameters: {
             query?: never;
             header?: never;
@@ -367,7 +372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/delete_instance/": {
+    "/api/v1.0/delete_instance/": {
         parameters: {
             query?: never;
             header?: never;
@@ -378,16 +383,13 @@ export interface paths {
         put?: never;
         /**
          * Delete an instance and, by default, its owned subtree (direct SPARQL)
-         * @description Removes every outgoing and incoming triple of the instance in one
-         *     transactional SPARQL update. With `cascade` (the default) the instance's
-         *     owned subtree goes with it: every individual reachable through `has_*`
-         *     links that is not reachable from outside the subtree. Coupled systems are
-         *     never owned by another instance, so traversal stops at them. Individuals
-         *     still reachable from elsewhere (an instance linked from outside and
-         *     everything below it, shared vocabulary terms for example) are kept and
-         *     reported in `kept`. With `cascade: false` only the instance itself is
-         *     removed and its children are left in place. Use
-         *     `get_instance_deletion_preview` to see the sets before deleting.
+         * @description Removes every outgoing and incoming triple of the instance in one transactional SPARQL update. With `cascade`
+         *     (the default) the instance's owned subtree goes with it: every individual reachable through `has_*` links that
+         *     is not reachable from outside the subtree. Coupled systems are never owned by another instance, so traversal
+         *     stops at them. Individuals still reachable from elsewhere (an instance linked from outside and everything below
+         *     it, shared vocabulary terms for example) are kept and reported in `kept`. With `cascade: false` only the instance
+         *     itself is removed and its children are left in place. Use `get_instance_deletion_preview` to see the sets before
+         *     deleting.
          */
         post: operations["deleteInstance"];
         delete?: never;
@@ -396,29 +398,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_instance_deletion_preview/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Preview what a cascading deletion of an instance would remove
-         * @description Read-only counterpart of `delete_instance`: the instances that would be
-         *     deleted (the requested one first), the reachable ones that would be kept,
-         *     and the surviving instances whose link would be removed.
-         */
-        get: operations["getInstanceDeletionPreview"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/import_coupled_kratos/": {
+    "/api/v1.0/import_coupled_kratos/": {
         parameters: {
             query?: never;
             header?: never;
@@ -429,10 +409,9 @@ export interface paths {
         put?: never;
         /**
          * Import a Kratos CoSimulation JSON configuration
-         * @description Recursively converts a Kratos CoSimulation parameters JSON object into
-         *     OWL instances (CoSim2OWL), infers class-restriction axioms for the
-         *     imported structure, and persists the updated ontology to GraphDB.
-         *     Runs on the in-memory Owlready2 path.
+         * @description Recursively converts a Kratos CoSimulation parameters JSON object into OWL instances (CoSim2OWL), infers
+         *     class-restriction axioms for the imported structure, and persists the updated ontology to GraphDB. Runs on
+         *     the in-memory Owlready2 path.
          */
         post: operations["importCoupledKratos"];
         delete?: never;
@@ -441,7 +420,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/export_coupled_kratos/": {
+    "/api/v1.0/export_coupled_kratos/": {
         parameters: {
             query?: never;
             header?: never;
@@ -452,9 +431,8 @@ export interface paths {
         put?: never;
         /**
          * Export a coupled system as Kratos CoSimulation JSON
-         * @description Reconstructs the nested Kratos CoSimulation parameters JSON for a
-         *     stored coupled-system instance by recursively resolving its properties.
-         *     Runs on the in-memory Owlready2 path.
+         * @description Reconstructs the nested Kratos CoSimulation parameters JSON for a stored coupled-system instance by
+         *     recursively resolving its properties. Runs on the in-memory Owlready2 path.
          */
         post: operations["exportCoupledKratos"];
         delete?: never;
@@ -463,7 +441,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/create_coupled/": {
+    "/api/v1.0/create_coupled/": {
         parameters: {
             query?: never;
             header?: never;
@@ -474,7 +452,8 @@ export interface paths {
         put?: never;
         /**
          * Create an empty coupled system
-         * @description Creates a new labelled instance of the `coupled_system` class and persists the ontology. Runs on the in-memory Owlready2 path.
+         * @description Creates a new labelled instance of the `coupled_system` class and persists the ontology. Runs on the
+         *     in-memory Owlready2 path.
          */
         post: operations["createCoupled"];
         delete?: never;
@@ -483,7 +462,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/copy_instance/": {
+    "/api/v1.0/copy_instance/": {
         parameters: {
             query?: never;
             header?: never;
@@ -494,9 +473,8 @@ export interface paths {
         put?: never;
         /**
          * Copy an instance with its direct properties
-         * @description Creates a structural copy of an instance, optionally attaching it to a
-         *     parent via the appropriate inverse property and overriding selected
-         *     property values with `data`. Runs on the in-memory Owlready2 path.
+         * @description Creates a structural copy of an instance, optionally attaching it to a parent via the appropriate inverse
+         *     property and overriding selected property values with `data`. Runs on the in-memory Owlready2 path.
          */
         post: operations["copyInstance"];
         delete?: never;
@@ -505,7 +483,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/copy_instance_recursively/": {
+    "/api/v1.0/copy_instance_recursively/": {
         parameters: {
             query?: never;
             header?: never;
@@ -516,9 +494,8 @@ export interface paths {
         put?: never;
         /**
          * Copy an instance and its linked sub-structure
-         * @description Like `copy_instance`, but also recursively copies linked child
-         *     instances down to `depth` levels (or without limit when `recursive` is
-         *     `"True"`). Runs on the in-memory Owlready2 path.
+         * @description Like `copy_instance`, but also recursively copies linked child instances down to `depth` levels (or without
+         *     limit when `recursive` is true). Runs on the in-memory Owlready2 path.
          */
         post: operations["copyInstanceRecursively"];
         delete?: never;
@@ -527,7 +504,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/infer_coupled_structure/": {
+    "/api/v1.0/infer_coupled_structure/": {
         parameters: {
             query?: never;
             header?: never;
@@ -538,9 +515,8 @@ export interface paths {
         put?: never;
         /**
          * Infer class-restriction axioms for a coupled system
-         * @description Runs the class-axiom inference over a coupled system's connected
-         *     instances (deriving existential and cardinality restrictions from the
-         *     instance structure) and persists the result. Runs on the in-memory
+         * @description Runs the class-axiom inference over a coupled system's connected instances (deriving existential and
+         *     cardinality restrictions from the instance structure) and persists the result. Runs on the in-memory
          *     Owlready2 path.
          */
         post: operations["inferCoupledStructure"];
@@ -550,7 +526,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_instance_properties_recursively/": {
+    "/api/v1.0/get_instance_properties_recursively/": {
         parameters: {
             query?: never;
             header?: never;
@@ -559,11 +535,9 @@ export interface paths {
         };
         /**
          * Get an instance's properties as a nested structure
-         * @description Returns the instance's properties with linked instances expanded
-         *     in place down to `depth` levels (or without limit when `recursive` is
-         *     `"True"`). Property names lose the `has_` prefix; single-valued
-         *     properties are returned as scalars, multi-valued ones as arrays. Runs
-         *     on the in-memory Owlready2 path.
+         * @description Returns the instance's properties with linked instances expanded in place down to `depth` levels (or
+         *     without limit when `recursive` is true). Property names lose the `has_` prefix; single-valued properties are
+         *     returned as scalars, multi-valued ones as arrays. Runs on the in-memory Owlready2 path.
          */
         get: operations["getInstancePropertiesRecursively"];
         put?: never;
@@ -574,7 +548,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/save_onto/": {
+    "/api/v1.0/save_onto/": {
         parameters: {
             query?: never;
             header?: never;
@@ -594,7 +568,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/save_locally/": {
+    "/api/v1.0/save_locally/": {
         parameters: {
             query?: never;
             header?: never;
@@ -614,7 +588,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/download_owl/": {
+    "/api/v1.0/download_owl/": {
         parameters: {
             query?: never;
             header?: never;
@@ -634,7 +608,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_hierarchy/": {
+    "/api/v1.0/get_class_hierarchy/": {
         parameters: {
             query?: never;
             header?: never;
@@ -643,9 +617,8 @@ export interface paths {
         };
         /**
          * Map root classes to their subclasses
-         * @description Returns a mapping from each root class (no named parent) to the list of
-         *     its direct subclasses. Superseded by `get_class_hierarchy_metadata` for
-         *     the explorer UI.
+         * @description Returns a mapping from each root class (no named parent) to the list of its direct subclasses. Superseded by
+         *     `get_class_hierarchy_metadata` for the explorer UI.
          */
         get: operations["getClassHierarchy"];
         put?: never;
@@ -656,7 +629,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_properties_recursively/": {
+    "/api/v1.0/get_class_properties_recursively/": {
         parameters: {
             query?: never;
             header?: never;
@@ -665,10 +638,9 @@ export interface paths {
         };
         /**
          * Get a class's restriction axioms as nested structures
-         * @description Returns the class's restriction axioms (property, cardinality, target
-         *     value) with class-valued targets expanded recursively down to `depth`
-         *     levels (or without limit when `recursive` is `"True"`). Runs on the
-         *     in-memory Owlready2 path.
+         * @description Returns the class's restriction axioms (property, cardinality, target value) with class-valued targets
+         *     expanded recursively down to `depth` levels (or without limit when `recursive` is true). Runs on the in-memory
+         *     Owlready2 path.
          */
         get: operations["getClassPropertiesRecursively"];
         put?: never;
@@ -679,7 +651,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/get_class_instances/": {
+    "/api/v1.0/get_class_instances/": {
         parameters: {
             query?: never;
             header?: never;
@@ -688,7 +660,8 @@ export interface paths {
         };
         /**
          * List instance identifiers of a class
-         * @description Returns the identifiers of all instances of the class (including subclass instances). Superseded by `get_class_instance_summaries` for the explorer UI.
+         * @description Returns the identifiers of all instances of the class (including subclass instances). Superseded by
+         *     `get_class_instance_summaries` for the explorer UI.
          */
         get: operations["getClassInstances"];
         put?: never;
@@ -703,163 +676,410 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Error: {
-            /** @description Human-readable error message. */
-            error: string;
+        /** ClassAxiom */
+        ClassAxiom: {
+            /**
+             * Property
+             * @description Restricted property name.
+             */
+            property: string;
+            /**
+             * Cardinality
+             * @description Cardinality bound, when the axiom is a cardinality restriction.
+             */
+            cardinality: number | null;
+            /**
+             * Value
+             * @description Target class name, the member class names of an intersection target, or one-key objects mapping a member class to its own axioms when expanded recursively.
+             */
+            value: string | (string | {
+                [key: string]: unknown;
+            })[];
         };
-        /** @description What a deletion removes and what it leaves in place. */
-        DeletionSets: {
-            /** @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected. */
-            deleted: string[];
-            /** @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it). */
-            kept: string[];
+        /** ClassHierarchyEntry */
+        ClassHierarchyEntry: {
+            /**
+             * Class
+             * @description Local class name.
+             * @example convergence_accelerators
+             */
+            class: string;
+            /**
+             * Parents
+             * @description Direct named superclasses (empty for root classes).
+             */
+            parents: string[];
         };
-        DeletionPreview: components["schemas"]["DeletionSets"] & {
-            /** @description Identifier of the instance the deletion applies to. */
+        /** ClassMetadata */
+        ClassMetadata: {
+            /**
+             * Id
+             * @description Local class name.
+             */
+            id: string;
+            /**
+             * Label
+             * @description Class label (currently identical to the local name).
+             */
+            label: string;
+            /**
+             * Descriptions
+             * @description `rdfs:comment` and `skos:definition` annotations.
+             */
+            descriptions: string[];
+            /** Superclasses */
+            superclasses: components["schemas"]["NamedReference"][];
+            /** Subclasses */
+            subclasses: components["schemas"]["NamedReference"][];
+            /**
+             * Restrictions
+             * @description Asserted OWL restriction axioms, sorted by property label.
+             */
+            restrictions: components["schemas"]["Restriction"][];
+            /** Equivalent Classes */
+            equivalent_classes: components["schemas"]["NamedReference"][];
+        };
+        /** CopyInstanceBody */
+        CopyInstanceBody: {
+            /**
+             * Instance
+             * @description Identifier of the instance to copy.
+             */
             instance: string;
-            /** @description Surviving instances whose link to the deleted instance is removed. */
+            /**
+             * Parent
+             * @description Optional parent instance to attach the copy to.
+             */
+            parent?: string;
+            /** Data */
+            data?: components["schemas"]["PropertyDataMap"];
+        };
+        /** CopyInstanceRecursivelyBody */
+        CopyInstanceRecursivelyBody: {
+            /**
+             * Instance
+             * @description Identifier of the instance to copy.
+             */
+            instance: string;
+            /**
+             * Parent
+             * @description Optional parent instance to attach the copy to.
+             */
+            parent?: string;
+            /** Data */
+            data?: components["schemas"]["PropertyDataMap"];
+            /**
+             * Depth
+             * @description Recursion depth (levels of linked instances to copy); null for no limit.
+             * @default 1
+             */
+            depth: number | null;
+            /**
+             * Recursive
+             * @description Unlimited recursion when true.
+             * @default false
+             */
+            recursive: boolean;
+        };
+        /** CoupledSystemBody */
+        CoupledSystemBody: {
+            /**
+             * Coupled System
+             * @description Identifier of the coupled-system instance.
+             */
+            coupled_system: string;
+        };
+        /** CreateClassInstanceBody */
+        CreateClassInstanceBody: {
+            /**
+             * Class
+             * @description Class to instantiate.
+             * @example solvers
+             */
+            class: string;
+            /**
+             * Label
+             * @description Human-readable label stored as `rdfs:label`.
+             * @example Airfoil fluid solver
+             */
+            label: string;
+        };
+        /** CreateCoupledBody */
+        CreateCoupledBody: {
+            /**
+             * Label
+             * @description Label for the new coupled system.
+             */
+            label: string;
+        };
+        /** CreateInstanceBody */
+        CreateInstanceBody: {
+            /**
+             * Property
+             * @description Class name of the new instance (also selects the `has_*` linking property).
+             * @example solvers
+             */
+            property: string;
+            /**
+             * Parent
+             * @description Identifier of the existing parent instance.
+             */
+            parent: string;
+            /** Data */
+            data?: components["schemas"]["PropertyDataMap"];
+        };
+        /** DeleteInstanceBody */
+        DeleteInstanceBody: {
+            /**
+             * Instance
+             * @description Identifier of the instance to delete.
+             */
+            instance: string;
+            /**
+             * Cascade
+             * @description Also delete the instance's owned subtree.
+             * @default true
+             */
+            cascade: boolean;
+        };
+        /** DeleteValueBody */
+        DeleteValueBody: {
+            /**
+             * Instance
+             * @description Instance identifier.
+             */
+            instance: string;
+            /**
+             * Property
+             * @description Property name (without the `has_` prefix).
+             * @example parallel_type
+             */
+            property: string;
+            /**
+             * Value
+             * @description The value to delete. The typed forms delete the exact triple (correct datatype serialization); a bare scalar is matched by serialization guess.
+             */
+            value: (components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"]) | components["schemas"]["ScalarValue"];
+            /**
+             * Cascade
+             * @description Also delete the unlinked instance's owned subtree when nothing else reaches it.
+             * @default true
+             */
+            cascade: boolean;
+        };
+        /** DeleteValuesBody */
+        DeleteValuesBody: {
+            /**
+             * Instance
+             * @description Instance identifier.
+             */
+            instance: string;
+            /**
+             * Properties
+             * @description Property names whose values are removed (without the `has_` prefix).
+             * @example [
+             *       "echo_level",
+             *       "parallel_type"
+             *     ]
+             */
+            properties: string[];
+        };
+        /** DeletionPreview */
+        DeletionPreview: {
+            /**
+             * Deleted
+             * @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected.
+             */
+            deleted: string[];
+            /**
+             * Kept
+             * @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it).
+             */
+            kept: string[];
+            /**
+             * Instance
+             * @description Identifier of the instance the deletion applies to.
+             */
+            instance: string;
+            /**
+             * Unlinked From
+             * @description Surviving instances whose link to the deleted instance is removed.
+             */
             unlinked_from: string[];
         };
-        UnlinkResult: components["schemas"]["DeletionSets"] & {
-            /** @description The unlinked instance, or null when the value was a literal. It appears in `deleted` when collected, in `kept` when it survives (still linked from elsewhere, a coupled system, the link holder itself, `cascade` off, or the link was not stored), and in neither when it is not an individual (a dangling reference or a class). The instance holding the link is never collected; it is listed in `kept` when the target is collected and a link below the target leads back to it. */
-            target: string | null;
+        /**
+         * @description The operation succeeded. The body is an empty JSON string.
+         * @constant
+         */
+        EmptyBody: "";
+        /** Error */
+        Error: {
+            /**
+             * Error
+             * @description Human-readable error message.
+             */
+            error: string;
         };
+        /** HealthError */
+        HealthError: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "error";
+            /**
+             * Graphdb
+             * @constant
+             */
+            graphdb: "unavailable";
+            /**
+             * Repository
+             * @description Name of the configured GraphDB repository.
+             */
+            repository: string;
+            /**
+             * Error
+             * @description Underlying connection error message.
+             */
+            error: string;
+        };
+        /** HealthOk */
         HealthOk: {
-            /** @constant */
+            /**
+             * Status
+             * @constant
+             */
             status: "ok";
-            /** @constant */
+            /**
+             * Graphdb
+             * @constant
+             */
             graphdb: "connected";
             /**
+             * Repository
              * @description Name of the configured GraphDB repository.
              * @example coupled_modelling
              */
             repository: string;
         };
-        HealthError: {
-            /** @constant */
-            status: "error";
-            /** @constant */
-            graphdb: "unavailable";
-            /** @description Name of the configured GraphDB repository. */
-            repository: string;
-            /** @description Underlying connection error message. */
-            error: string;
+        /** ImportKratosBody */
+        ImportKratosBody: {
+            data: components["schemas"]["KratosParameters"];
+            /**
+             * Label
+             * @description Label for the imported coupled system.
+             * @example FSI Mok benchmark
+             */
+            label: string;
+        };
+        /** InstanceDataBody */
+        InstanceDataBody: {
+            /**
+             * Instance
+             * @description Instance identifier.
+             */
+            instance: string;
+            data: components["schemas"]["PropertyDataMap"];
+        };
+        /** InstanceDeletionResult */
+        InstanceDeletionResult: {
+            /**
+             * Deleted
+             * @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected.
+             */
+            deleted: string[];
+            /**
+             * Kept
+             * @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it).
+             */
+            kept: string[];
+            /**
+             * Instance
+             * @description Identifier of the instance the deletion applies to.
+             */
+            instance: string;
+            /**
+             * Unlinked From
+             * @description Surviving instances whose link to the deleted instance is removed.
+             */
+            unlinked_from: string[];
+            /**
+             * Status
+             * @constant
+             */
+            status: "success";
         };
         /**
          * @description Local identifier of an instance (UUID-based for instances created through the API).
          * @example instance_550e8400-e29b-41d4-a716-446655440000
          */
         InstanceId: string;
-        /** @description A literal value (string, number or boolean). */
-        ScalarValue: string | number | boolean;
-        /**
-         * @description Property-name to value(s) mapping. Keys are property names without the
-         *     `has_` prefix (plus `label` for `rdfs:label`). Values are scalars or
-         *     arrays of scalars. Whether plain strings on object properties are
-         *     label-resolved to object references is documented per endpoint; the
-         *     replace endpoints accept only non-string literals (numbers, booleans),
-         *     `label` strings, and explicit `instance*` references.
-         * @example {
-         *       "echo_level": 1,
-         *       "print_colors": false
-         *     }
-         */
-        PropertyDataMap: {
-            [key: string]: components["schemas"]["ScalarValue"] | components["schemas"]["ScalarValue"][];
-        };
-        /**
-         * @description String-encoded boolean; recursion is unlimited only when the exact string `"True"` is sent.
-         * @default False
-         * @enum {string}
-         */
-        RecursiveFlag: "True" | "False";
-        ClassHierarchyEntry: {
+        /** InstanceMetadata */
+        InstanceMetadata: {
             /**
-             * @description Local class name.
-             * @example convergence_accelerators
+             * Id
+             * @description Local instance identifier.
              */
-            class: string;
-            /** @description Direct named superclasses (empty for root classes). */
-            parents: string[];
+            id: string;
+            /**
+             * Label
+             * @description Preferred label, falling back to the identifier.
+             */
+            label: string;
+            /**
+             * Types
+             * @description Project-local class names of the instance.
+             */
+            types: string[];
+            /**
+             * Properties
+             * @description Direct properties, sorted by property name.
+             */
+            properties: components["schemas"]["InstancePropertyGroup"][];
         };
-        PreviewItem: {
-            /** @description Property name. */
+        /** InstancePropertyGroup */
+        InstancePropertyGroup: {
+            /**
+             * Property
+             * @description Property name without the `has_` prefix.
+             */
             property: string;
-            value: components["schemas"]["ScalarValue"];
-            /**
-             * @description Whether the value is a typed literal or the resolved label of a linked instance.
-             * @enum {string}
-             */
-            kind: "literal" | "object";
+            /** Values */
+            values: (components["schemas"]["ObjectPropertyValue"] | components["schemas"]["LiteralPropertyValue"])[];
         };
-        SearchResults: {
-            /** @description Matching classes (empty when `type=instance`). */
-            classes: components["schemas"]["SearchClassResult"][];
-            /** @description Matching instances (empty when `type=class`). */
-            instances: components["schemas"]["InstanceSummary"][];
-        };
-        SearchClassResult: {
-            /** @description Local class name. */
-            id: string;
-        };
+        /** InstanceSummary */
         InstanceSummary: {
-            /** @description Local instance identifier. */
+            /**
+             * Id
+             * @description Local instance identifier.
+             */
             id: string;
-            /** @description Preferred label (English first), falling back to the identifier. */
+            /**
+             * Label
+             * @description Preferred label (English first), falling back to the identifier.
+             */
             label: string;
-            /** @description Direct class names of the instance. */
+            /**
+             * Types
+             * @description Direct class names of the instance.
+             */
             types: string[];
-            /** @description Up to three property values for compact display (literals first). */
+            /**
+             * Property Preview
+             * @description Up to three property values for compact display (literals first).
+             */
             property_preview: components["schemas"]["PreviewItem"][];
-            /** @description True when the instance has more values than shown in the preview. */
+            /**
+             * Preview Truncated
+             * @description True when the instance has more values than shown in the preview.
+             */
             preview_truncated: boolean;
         };
-        NamedReference: {
-            /** @description Local name of the referenced entity. */
-            id: string;
-            /** @description Preferred label, falling back to the local name. */
-            label: string;
+        /** @description Kratos CoSimulation parameters JSON (nested solver, coupling and data-transfer configuration). */
+        KratosParameters: {
+            [key: string]: unknown;
         };
-        /** @description Targets an object-property triple pointing at the referenced instance. */
-        ObjectValueTarget: {
-            /** @constant */
-            kind: "object";
-            /** @description Identifier of the linked instance the triple points at. */
-            id: string;
-        };
-        /** @description Targets a literal triple; the datatype and language tag drive term serialization. */
-        LiteralValueTarget: {
-            /** @constant */
-            kind: "literal";
-            value: components["schemas"]["ScalarValue"];
-            /**
-             * @description XSD datatype IRI of the literal (defaults to plain string serialization).
-             * @example http://www.w3.org/2001/XMLSchema#integer
-             */
-            datatype?: string;
-            /**
-             * @description Language tag of the literal — required to match language-tagged triples ("value"@de).
-             * @example de
-             */
-            language?: string;
-        };
-        ObjectPropertyValue: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "object";
-            /** @description Identifier of the linked instance. */
-            id: string;
-            /** @description Preferred label of the linked instance (falls back to the id when unlabeled). */
-            label: string;
-            /** @description Local class names of the linked instance. */
-            types: string[];
-            /** @description Up to three of the linked instance's property values, literals first. */
-            property_preview: components["schemas"]["PreviewItem"][];
-            /** @description Whether the linked instance has more property values than the preview shows. */
-            preview_truncated: boolean;
-        };
+        /** LiteralPropertyValue */
         LiteralPropertyValue: {
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -868,90 +1088,62 @@ export interface components {
             kind: "literal";
             value: components["schemas"]["ScalarValue"];
             /**
+             * Datatype
              * @description XSD datatype IRI of the literal.
              * @example http://www.w3.org/2001/XMLSchema#integer
              */
             datatype: string;
-            /** @description Language tag, when present on the literal. */
-            language?: string;
-        };
-        InstancePropertyGroup: {
-            /** @description Property name without the `has_` prefix. */
-            property: string;
-            values: (components["schemas"]["ObjectPropertyValue"] | components["schemas"]["LiteralPropertyValue"])[];
-        };
-        InstanceMetadata: {
-            /** @description Local instance identifier. */
-            id: string;
-            /** @description Preferred label, falling back to the identifier. */
-            label: string;
-            /** @description Project-local class names of the instance. */
-            types: string[];
-            /** @description Direct properties, sorted by property name. */
-            properties: components["schemas"]["InstancePropertyGroup"][];
-        };
-        RestrictionTarget: {
-            /** @description Local name of the target class, or the raw value for literal targets. */
-            id: string;
-            /** @description Display label ("A & B" for intersections, "Anonymous Class (id)" for unresolved blank nodes). */
-            label: string;
-            value?: components["schemas"]["ScalarValue"];
-            /** @description XSD datatype IRI (literal targets only). */
-            datatype?: string;
-            /** @description Language tag (literal targets only). */
-            language?: string;
-            /** @description Named member classes (intersection targets only). */
-            members?: components["schemas"]["NamedReference"][];
-        };
-        Restriction: {
-            property: components["schemas"]["NamedReference"];
             /**
-             * @description Type of OWL restriction.
-             * @enum {string}
+             * Language
+             * @description Language tag, when present on the literal.
              */
-            kind: "some_values_from" | "all_values_from" | "has_value" | "cardinality" | "min_cardinality" | "max_cardinality" | "qualified_cardinality" | "min_qualified_cardinality" | "max_qualified_cardinality";
-            /** @description Cardinality bound (cardinality restrictions only). */
-            cardinality?: number | string;
-            /**
-             * @description Nature of the restriction target.
-             * @enum {string}
-             */
-            target_kind?: "class" | "literal" | "bnode" | "intersection" | "data_range";
-            target?: components["schemas"]["RestrictionTarget"];
-        };
-        ClassMetadata: {
-            /** @description Local class name. */
-            id: string;
-            /** @description Class label (currently identical to the local name). */
-            label: string;
-            /** @description `rdfs:comment` and `skos:definition` annotations. */
-            descriptions: string[];
-            superclasses: components["schemas"]["NamedReference"][];
-            subclasses: components["schemas"]["NamedReference"][];
-            /** @description Asserted OWL restriction axioms, sorted by property label. */
-            restrictions: components["schemas"]["Restriction"][];
-            equivalent_classes: components["schemas"]["NamedReference"][];
-        };
-        ClassAxiom: {
-            /** @description Restricted property name. */
-            property: string;
-            /** @description Cardinality bound, when the axiom is a cardinality restriction. */
-            cardinality: number | null;
-            /** @description Target class name(s); nested axiom objects when expanded recursively. */
-            value: string | {
-                [key: string]: components["schemas"]["ClassAxiom"][];
-            }[];
+            language?: string;
         };
         /**
-         * @description Recursive property structure: keys are property names (without the
-         *     `has_` prefix), values are scalars, arrays, or one-key objects mapping
-         *     a linked instance's identifier to its own nested properties.
+         * LiteralValueTarget
+         * @description Targets a literal triple; the datatype and language tag drive term serialization.
+         */
+        LiteralValueTarget: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "literal";
+            value: components["schemas"]["ScalarValue"];
+            /**
+             * Datatype
+             * @description XSD datatype IRI of the literal (defaults to plain string serialization).
+             * @example http://www.w3.org/2001/XMLSchema#integer
+             */
+            datatype?: string;
+            /**
+             * Language
+             * @description Language tag of the literal, required to match language-tagged triples ("value"@de).
+             * @example de
+             */
+            language?: string;
+        };
+        /** NamedReference */
+        NamedReference: {
+            /**
+             * Id
+             * @description Local name of the referenced entity.
+             */
+            id: string;
+            /**
+             * Label
+             * @description Preferred label, falling back to the local name.
+             */
+            label: string;
+        };
+        /**
+         * @description Recursive property structure: keys are property names (without the `has_` prefix), values are scalars, arrays, or one-key objects mapping a linked instance's identifier to its own nested properties.
          * @example {
          *       "label": "FSI Mok benchmark",
          *       "problem_data": {
          *         "problem_data_1": {
-         *           "parallel_type": "OpenMP",
-         *           "echo_level": 1
+         *           "echo_level": 1,
+         *           "parallel_type": "OpenMP"
          *         }
          *       }
          *     }
@@ -959,69 +1151,225 @@ export interface components {
         NestedProperties: {
             [key: string]: unknown;
         };
-        /** @description Kratos CoSimulation parameters JSON (nested solver, coupling and data-transfer configuration). */
-        KratosParameters: {
-            [key: string]: unknown;
+        /**
+         * ObjectPropertyValue
+         * @description A linked instance: the summary shape plus the value kind.
+         */
+        ObjectPropertyValue: {
+            /**
+             * Id
+             * @description Local instance identifier.
+             */
+            id: string;
+            /**
+             * Label
+             * @description Preferred label (English first), falling back to the identifier.
+             */
+            label: string;
+            /**
+             * Types
+             * @description Direct class names of the instance.
+             */
+            types: string[];
+            /**
+             * Property Preview
+             * @description Up to three property values for compact display (literals first).
+             */
+            property_preview: components["schemas"]["PreviewItem"][];
+            /**
+             * Preview Truncated
+             * @description True when the instance has more values than shown in the preview.
+             */
+            preview_truncated: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "object";
+        };
+        /**
+         * ObjectValueTarget
+         * @description Targets an object-property triple pointing at the referenced instance.
+         */
+        ObjectValueTarget: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "object";
+            /**
+             * Id
+             * @description Identifier of the linked instance the triple points at.
+             */
+            id: string;
+        };
+        /** PreviewItem */
+        PreviewItem: {
+            /**
+             * Property
+             * @description Property name.
+             */
+            property: string;
+            value: components["schemas"]["ScalarValue"];
+            /**
+             * Kind
+             * @description Whether the value is a typed literal or the resolved label of a linked instance.
+             * @enum {string}
+             */
+            kind: "literal" | "object";
+        };
+        /**
+         * @description Property-name to value(s) mapping. Keys are property names without the `has_` prefix (plus `label` for `rdfs:label`). Values are scalars or arrays of scalars. Whether plain strings on object properties are label-resolved to object references is documented per endpoint; the replace endpoints accept only non-string literals (numbers, booleans), `label` strings, and explicit `instance*` references.
+         * @example {
+         *       "echo_level": 1,
+         *       "print_colors": false
+         *     }
+         */
+        PropertyDataMap: {
+            [key: string]: components["schemas"]["ScalarValue"] | components["schemas"]["ScalarValue"][];
+        };
+        /** ReplaceValueBody */
+        ReplaceValueBody: {
+            /**
+             * Instance
+             * @description Instance identifier.
+             */
+            instance: string;
+            /**
+             * Property
+             * @description Property name (without the `has_` prefix).
+             */
+            property: string;
+            /**
+             * Old Value
+             * @description The currently stored value to replace.
+             */
+            old_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
+            /**
+             * New Value
+             * @description The replacement value.
+             */
+            new_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
+        };
+        /** Restriction */
+        Restriction: {
+            property: components["schemas"]["NamedReference"];
+            /**
+             * Kind
+             * @description Type of OWL restriction.
+             * @enum {string}
+             */
+            kind: "some_values_from" | "all_values_from" | "has_value" | "cardinality" | "min_cardinality" | "max_cardinality" | "qualified_cardinality" | "min_qualified_cardinality" | "max_qualified_cardinality";
+            /**
+             * Cardinality
+             * @description Cardinality bound (cardinality restrictions only).
+             */
+            cardinality?: number | string;
+            /**
+             * Target Kind
+             * @description Nature of the restriction target.
+             * @enum {string}
+             */
+            target_kind?: "class" | "literal" | "bnode" | "intersection" | "data_range";
+            target?: components["schemas"]["RestrictionTarget"];
+        };
+        /** RestrictionTarget */
+        RestrictionTarget: {
+            /**
+             * Id
+             * @description Local name of the target class, or the raw value for literal targets.
+             */
+            id: string;
+            /**
+             * Label
+             * @description Display label ("A & B" for intersections, "Anonymous Class (id)" for unresolved blank nodes).
+             */
+            label: string;
+            value?: components["schemas"]["ScalarValue"];
+            /**
+             * Datatype
+             * @description XSD datatype IRI (literal targets only).
+             */
+            datatype?: string;
+            /**
+             * Language
+             * @description Language tag (literal targets only).
+             */
+            language?: string;
+            /**
+             * Members
+             * @description Named member classes (intersection targets only).
+             */
+            members?: components["schemas"]["NamedReference"][];
+        };
+        /** @description A literal value (string, number or boolean). */
+        ScalarValue: string | number | boolean;
+        /** SearchClassResult */
+        SearchClassResult: {
+            /**
+             * Id
+             * @description Local class name.
+             */
+            id: string;
+        };
+        /** SearchResults */
+        SearchResults: {
+            /**
+             * Classes
+             * @description Matching classes (empty when `type=instance`).
+             */
+            classes: components["schemas"]["SearchClassResult"][];
+            /**
+             * Instances
+             * @description Matching instances (empty when `type=class`).
+             */
+            instances: components["schemas"]["InstanceSummary"][];
+        };
+        /** UnlinkResult */
+        UnlinkResult: {
+            /**
+             * Deleted
+             * @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected.
+             */
+            deleted: string[];
+            /**
+             * Kept
+             * @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it).
+             */
+            kept: string[];
+            /**
+             * Target
+             * @description The unlinked instance, or null when the value was a literal. It appears in `deleted` when collected, in `kept` when it survives (still linked from elsewhere, a coupled system, the link holder itself, `cascade` off, or the link was not stored), and in neither when it is not an individual (a dangling reference or a class). The instance holding the link is never collected; it is listed in `kept` when the target is collected and a link below the target leads back to it.
+             */
+            target: string | null;
+        };
+        /** ValueDeletionResult */
+        ValueDeletionResult: {
+            /**
+             * Deleted
+             * @description Identifiers the deletion removes, the root of the collected subtree first; empty when nothing is collected.
+             */
+            deleted: string[];
+            /**
+             * Kept
+             * @description Reachable instances kept because they are still reachable from outside the collected subtree (an instance linked from elsewhere, or a coupled system, plus everything below it).
+             */
+            kept: string[];
+            /**
+             * Target
+             * @description The unlinked instance, or null when the value was a literal. It appears in `deleted` when collected, in `kept` when it survives (still linked from elsewhere, a coupled system, the link holder itself, `cascade` off, or the link was not stored), and in neither when it is not an individual (a dangling reference or a class). The instance holding the link is never collected; it is listed in `kept` when the target is collected and a link below the target leads back to it.
+             */
+            target: string | null;
+            /**
+             * Status
+             * @constant
+             */
+            status: "success";
         };
     };
-    responses: {
-        /** @description The operation succeeded. The body is an empty JSON string. */
-        EmptyCreated: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": "";
-            };
-        };
-        /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
-        BadRequest: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description GraphDB is unreachable or the repository is offline. */
-        GraphDBUnavailable: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Unexpected server error. */
-        UnexpectedError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-    };
+    responses: never;
     parameters: never;
-    requestBodies: {
-        InstanceDataBody: {
-            content: {
-                "application/json": {
-                    /** @description Instance identifier. */
-                    instance: string;
-                    data: components["schemas"]["PropertyDataMap"];
-                };
-            };
-        };
-        CoupledSystemBody: {
-            content: {
-                "application/json": {
-                    /** @description Identifier of the coupled-system instance. */
-                    coupled_system: string;
-                };
-            };
-        };
-    };
+    requestBodies: never;
     headers: never;
     pathItems: never;
 }
@@ -1103,18 +1451,39 @@ export interface operations {
                     "application/json": components["schemas"]["ClassHierarchyEntry"][];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     searchEntities: {
         parameters: {
             query: {
-                /**
-                 * @description Search text (matched as a case-insensitive substring).
-                 * @example mok
-                 */
+                /** @description Search text (matched as a case-insensitive substring). */
                 q: string;
                 /** @description Restrict results to one entity kind. */
                 type?: "all" | "class" | "instance";
@@ -1145,17 +1514,30 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getClassInstanceSummaries: {
         parameters: {
             query?: {
-                /**
-                 * @description Local class name to list instances for (for example `solvers`). Omit for all instances.
-                 * @example solvers
-                 */
+                /** @description Local class name to list instances for (for example `solvers`). Omit for all instances. */
                 class?: string;
             };
             header?: never;
@@ -1182,17 +1564,30 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getClassMetadata: {
         parameters: {
             query: {
-                /**
-                 * @description Local class name (for example `coupled_system`).
-                 * @example coupled_system
-                 */
+                /** @description Local class name (for example `coupled_system`). */
                 class: string;
             };
             header?: never;
@@ -1219,17 +1614,30 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getInstancePropertyMetadata: {
         parameters: {
             query: {
-                /**
-                 * @description Local instance identifier.
-                 * @example instance_550e8400-e29b-41d4-a716-446655440000
-                 */
+                /** @description Local instance identifier. */
                 instance: string;
             };
             header?: never;
@@ -1256,214 +1664,32 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    createInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * @description Class name of the new instance (also selects the `has_*` linking property).
-                     * @example solvers
-                     */
-                    property: string;
-                    /** @description Identifier of the existing parent instance. */
-                    parent: string;
-                    data?: components["schemas"]["PropertyDataMap"];
-                };
-            };
-        };
-        responses: {
-            /** @description Identifier of the created instance. */
-            201: {
+            /** @description Unexpected server error. */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InstanceId"];
+                    "application/json": components["schemas"]["Error"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    createClassInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * @description Class to instantiate.
-                     * @example solvers
-                     */
-                    class: string;
-                    /**
-                     * @description Human-readable label stored as `rdfs:label`.
-                     * @example Airfoil fluid solver
-                     */
-                    label: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Identifier of the created instance. */
-            201: {
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InstanceId"];
+                    "application/json": components["schemas"]["Error"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    addValues: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: components["requestBodies"]["InstanceDataBody"];
-        responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    replaceValues: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: components["requestBodies"]["InstanceDataBody"];
-        responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    replaceProperties: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: components["requestBodies"]["InstanceDataBody"];
-        responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    replaceValue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Instance identifier. */
-                    instance: string;
-                    /** @description Property name (without the `has_` prefix). */
-                    property: string;
-                    /** @description The currently stored value to replace. */
-                    old_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
-                    /** @description The replacement value. */
-                    new_value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"];
-                };
-            };
-        };
-        responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    deleteValue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Instance identifier. */
-                    instance: string;
-                    /**
-                     * @description Property name (without the `has_` prefix).
-                     * @example parallel_type
-                     */
-                    property: string;
-                    /** @description The value to delete. The typed forms delete the exact triple (correct datatype serialization); a bare scalar is matched by serialization guess. */
-                    value: components["schemas"]["ObjectValueTarget"] | components["schemas"]["LiteralValueTarget"] | components["schemas"]["ScalarValue"];
-                    /**
-                     * @description Also delete the unlinked instance's owned subtree when nothing else reaches it.
-                     * @default true
-                     */
-                    cascade?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description The value was deleted. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UnlinkResult"] & {
-                        /** @constant */
-                        status: "success";
-                    };
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
         };
     };
     getValueDeletionPreview: {
         parameters: {
             query: {
-                /**
-                 * @description Identifier of the instance holding the link.
-                 * @example instance_550e8400-e29b-41d4-a716-446655440000
-                 */
+                /** @description Identifier of the instance holding the link. */
                 instance: string;
-                /**
-                 * @description Property name (without the `has_` prefix).
-                 * @example solver_settings
-                 */
+                /** @description Property name (without the `has_` prefix). */
                 property: string;
                 /** @description Identifier of the linked instance. */
                 target: string;
@@ -1483,86 +1709,39 @@ export interface operations {
                     "application/json": components["schemas"]["UnlinkResult"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    deleteValues: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Instance identifier. */
-                    instance: string;
-                    /**
-                     * @description Property names whose values are removed (without the `has_` prefix).
-                     * @example [
-                     *       "echo_level",
-                     *       "parallel_type"
-                     *     ]
-                     */
-                    properties: string[];
-                };
-            };
-        };
-        responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
-        };
-    };
-    deleteInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Identifier of the instance to delete. */
-                    instance: string;
-                    /**
-                     * @description Also delete the instance's owned subtree.
-                     * @default true
-                     */
-                    cascade?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description The instance was deleted. */
-            200: {
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeletionPreview"] & {
-                        /** @constant */
-                        status: "success";
-                    };
+                    "application/json": components["schemas"]["Error"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getInstanceDeletionPreview: {
         parameters: {
             query: {
-                /**
-                 * @description Local instance identifier.
-                 * @example instance_550e8400-e29b-41d4-a716-446655440000
-                 */
+                /** @description Local instance identifier. */
                 instance: string;
                 /** @description Preview the cascading (default) or the single-instance deletion. */
                 cascade?: boolean;
@@ -1582,9 +1761,492 @@ export interface operations {
                     "application/json": components["schemas"]["DeletionPreview"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["UnexpectedError"];
-            503: components["responses"]["GraphDBUnavailable"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInstanceBody"];
+            };
+        };
+        responses: {
+            /** @description Identifier of the created instance. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceId"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createClassInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClassInstanceBody"];
+            };
+        };
+        responses: {
+            /** @description Identifier of the created instance. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceId"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    addValues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceDataBody"];
+            };
+        };
+        responses: {
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    replaceValues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceDataBody"];
+            };
+        };
+        responses: {
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    replaceProperties: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceDataBody"];
+            };
+        };
+        responses: {
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    replaceValue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceValueBody"];
+            };
+        };
+        responses: {
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteValue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteValueBody"];
+            };
+        };
+        responses: {
+            /** @description The value was deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValueDeletionResult"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteValues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteValuesBody"];
+            };
+        };
+        responses: {
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteInstanceBody"];
+            };
+        };
+        responses: {
+            /** @description The instance was deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceDeletionResult"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GraphDB is unreachable or the repository is offline. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     importCoupledKratos: {
@@ -1596,14 +2258,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    data: components["schemas"]["KratosParameters"];
-                    /**
-                     * @description Label for the imported coupled system.
-                     * @example FSI Mok benchmark
-                     */
-                    label: string;
-                };
+                "application/json": components["schemas"]["ImportKratosBody"];
             };
         };
         responses: {
@@ -1616,7 +2271,15 @@ export interface operations {
                     "application/json": components["schemas"]["InstanceId"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     exportCoupledKratos: {
@@ -1626,7 +2289,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: components["requestBodies"]["CoupledSystemBody"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoupledSystemBody"];
+            };
+        };
         responses: {
             /** @description The reconstructed Kratos parameters object. */
             201: {
@@ -1637,7 +2304,15 @@ export interface operations {
                     "application/json": components["schemas"]["KratosParameters"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     createCoupled: {
@@ -1649,10 +2324,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Label for the new coupled system. */
-                    label: string;
-                };
+                "application/json": components["schemas"]["CreateCoupledBody"];
             };
         };
         responses: {
@@ -1665,7 +2337,15 @@ export interface operations {
                     "application/json": components["schemas"]["InstanceId"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     copyInstance: {
@@ -1677,13 +2357,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Identifier of the instance to copy. */
-                    instance: string;
-                    /** @description Optional parent instance to attach the copy to. */
-                    parent?: string;
-                    data?: components["schemas"]["PropertyDataMap"];
-                };
+                "application/json": components["schemas"]["CopyInstanceBody"];
             };
         };
         responses: {
@@ -1696,7 +2370,15 @@ export interface operations {
                     "application/json": components["schemas"]["InstanceId"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     copyInstanceRecursively: {
@@ -1708,19 +2390,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Identifier of the instance to copy. */
-                    instance: string;
-                    /** @description Optional parent instance to attach the copy to. */
-                    parent?: string;
-                    data?: components["schemas"]["PropertyDataMap"];
-                    /**
-                     * @description Recursion depth (levels of linked instances to copy).
-                     * @default 1
-                     */
-                    depth?: number | string;
-                    recursive?: components["schemas"]["RecursiveFlag"];
-                };
+                "application/json": components["schemas"]["CopyInstanceRecursivelyBody"];
             };
         };
         responses: {
@@ -1733,7 +2403,15 @@ export interface operations {
                     "application/json": components["schemas"]["InstanceId"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     inferCoupledStructure: {
@@ -1743,10 +2421,30 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: components["requestBodies"]["CoupledSystemBody"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoupledSystemBody"];
+            };
+        };
         responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getInstancePropertiesRecursively: {
@@ -1756,8 +2454,8 @@ export interface operations {
                 instance: string;
                 /** @description Recursion depth. */
                 depth?: number;
-                /** @description Unlimited recursion when `"True"`. */
-                recursive?: components["schemas"]["RecursiveFlag"];
+                /** @description Unlimited recursion when true. */
+                recursive?: boolean;
             };
             header?: never;
             path?: never;
@@ -1774,7 +2472,15 @@ export interface operations {
                     "application/json": components["schemas"]["NestedProperties"];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     saveOnto: {
@@ -1786,8 +2492,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: components["responses"]["EmptyCreated"];
-            400: components["responses"]["BadRequest"];
+            /** @description The operation succeeded. The body is an empty JSON string. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyBody"];
+                };
+            };
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     saveLocally: {
@@ -1808,7 +2530,15 @@ export interface operations {
                     "application/rdf+xml": string;
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     downloadOwl: {
@@ -1829,7 +2559,15 @@ export interface operations {
                     "application/rdf+xml": string;
                 };
             };
-            500: components["responses"]["UnexpectedError"];
+            /** @description Unexpected server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getClassHierarchy: {
@@ -1847,21 +2585,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "coupled_system": [],
-                     *       "settings": [
-                     *         "io_settings_1",
-                     *         "solver_settings_1"
-                     *       ]
-                     *     }
-                     */
                     "application/json": {
                         [key: string]: string[];
                     };
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getClassPropertiesRecursively: {
@@ -1871,8 +2608,8 @@ export interface operations {
                 class: string;
                 /** @description Recursion depth. */
                 depth?: number;
-                /** @description Unlimited recursion when `"True"`. */
-                recursive?: components["schemas"]["RecursiveFlag"];
+                /** @description Unlimited recursion when true. */
+                recursive?: boolean;
             };
             header?: never;
             path?: never;
@@ -1889,7 +2626,15 @@ export interface operations {
                     "application/json": components["schemas"]["ClassAxiom"][];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getClassInstances: {
@@ -1913,7 +2658,15 @@ export interface operations {
                     "application/json": string[];
                 };
             };
-            400: components["responses"]["BadRequest"];
+            /** @description Invalid input (missing parameters, unknown subject/class, or validation failure). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
 }

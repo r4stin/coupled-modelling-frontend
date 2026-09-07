@@ -17,7 +17,7 @@ Requires **Node 20+**.
 
 The full stack (GraphDB, the backend API, and this explorer) can also be run with Docker: see [One-Command Stack in the backend repository's README_GRAPHDB.md](https://github.com/r4stin/coupled_modelling/blob/dev/README_GRAPHDB.md#0-one-command-stack-docker). The compose setup builds this repository from a sibling clone.
 
-1. Start the backend (see `README_GRAPHDB.md` in the backend repo): GraphDB on `localhost:7200`, then the Flask API on `localhost:5000`.
+1. Start the backend (see `README_GRAPHDB.md` in the backend repo): GraphDB on `localhost:7200`, then the API on `localhost:5000`.
 2. Configure the API URL (defaults work for local development):
    ```bash
    cp .env.example .env.local
@@ -46,7 +46,7 @@ The full stack (GraphDB, the backend API, and this explorer) can also be run wit
 src/
 ├── app/                # Next.js App Router pages
 ├── components/         # React components (Providers, …)
-├── services/backend/   # Flask API calls — one file per resource (ky client)
+├── services/backend/   # Backend API calls — one file per resource (ky client)
 ├── constants/
 ├── lib/
 └── types/              # API response types (openapi.ts is generated from the backend OpenAPI spec)
