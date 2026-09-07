@@ -29,56 +29,80 @@ export type UnlinkPreviewState = PreviewState<UnlinkResult> | { status: 'unsuppo
 export const toPreviewState = <T>(data: T | undefined, error: unknown, isRefusal: (error: unknown) => boolean): PreviewState<T> =>
     data ? { status: 'ready', preview: data } : error && !isRefusal(error) ? { status: 'error' } : { status: 'loading' };
 
-const keptSentence = (count: number) =>
-    `${plural(count, 'instance')} linked below it ${count === 1 ? 'is' : 'are'} still reachable from elsewhere and will be kept.`;
+/** A confirmation: the question, then each consequence on its own line. */
+export type DialogMessage = { text: string; consequences: string[] };
 
-/** Confirmation text for an instance deletion; the cascade scope is spelled out once the preview is known. */
-export const deletionMessage = (instanceDisplay: string, state: DeletionPreviewState) => {
+const question = (subject: string, withContents: boolean) => `Permanently delete ${subject}${withContents ? ' and everything it contains' : ''}?`;
+
+const containedLine = (count: number) => `${plural(count, 'contained instance')} will be deleted with it.`;
+
+// "Below it": children of the deleted subtree that survive, as opposed to the instances linking to it.
+const keptLine = (count: number) =>
+    `${plural(count, 'instance')} below it ${count === 1 ? 'stays' : 'stay'}, since ${count === 1 ? 'it is' : 'they are'} still used elsewhere.`;
+
+// Counts the linking instances, not their links: one instance may link through several properties.
+const unlinkedLine = (count: number) =>
+    count === 1 ? '1 link from another instance will be removed.' : `Links from ${count} other instances will be removed.`;
+
+/** Confirmation for an instance deletion; the cascade scope is spelled out once the preview is known. */
+export const deletionMessage = (instanceDisplay: string, state: DeletionPreviewState): DialogMessage => {
     if (state.status === 'loading') {
-        return `Checking what deleting instance ${instanceDisplay} would remove…`;
+        return { text: `Checking what deleting ${instanceDisplay} would remove…`, consequences: [] };
     }
     if (state.status === 'error') {
-        return `Are you sure you want to permanently delete instance ${instanceDisplay} and everything it contains from the knowledge base?`;
+        return {
+            text: question(instanceDisplay, false),
+            consequences: ['What it contains could not be checked; everything it contains will be deleted with it.'],
+        };
     }
     const { instance, deleted, kept, unlinked_from: unlinkedFrom } = state.preview;
     const contained = containedCount(instance, deleted);
-    const scope = contained > 0 ? ` and the ${plural(contained, 'instance')} it contains` : '';
-    const sentences = [`Are you sure you want to permanently delete instance ${instanceDisplay}${scope} from the knowledge base?`];
+    const consequences: string[] = [];
+    if (contained > 0) {
+        consequences.push(containedLine(contained));
+    }
     if (kept.length > 0) {
-        sentences.push(keptSentence(kept.length));
+        consequences.push(keptLine(kept.length));
     }
     if (unlinkedFrom.length > 0) {
-        sentences.push(
-            `It is also linked from ${plural(unlinkedFrom.length, 'other instance')}. ${unlinkedFrom.length === 1 ? 'That link' : 'Those links'} will be removed.`,
-        );
+        consequences.push(unlinkedLine(unlinkedFrom.length));
     }
-    return sentences.join(' ');
+    return { text: question(instanceDisplay, contained > 0), consequences };
 };
 
-/** Confirmation text for deleting a value; `state` is null for literals, and the holder is never counted among the kept instances. */
-export const unlinkMessage = (property: string, valueDisplay: string, holderId: string, state: UnlinkPreviewState | null) => {
-    const question = `Are you sure you want to delete ${property} "${valueDisplay}"?`;
+/** Confirmation for deleting a value; `state` is null for literals, and the holder is never counted among the kept instances. */
+export const unlinkMessage = (property: string, valueDisplay: string, holderId: string, state: UnlinkPreviewState | null): DialogMessage => {
+    const text = question(`${property} "${valueDisplay}"`, false);
     if (state === null || state.status === 'unsupported') {
-        return question;
+        return { text, consequences: [] };
     }
     if (state.status === 'loading') {
-        return `Checking what deleting ${property} "${valueDisplay}" would remove…`;
+        return { text: `Checking what deleting ${property} "${valueDisplay}" would remove…`, consequences: [] };
     }
     if (state.status === 'error') {
-        return `${question} If nothing else links to it, the linked instance and everything it contains will be deleted as well.`;
+        return {
+            text,
+            consequences: [
+                'What it links to could not be checked; if nothing else links to it, the linked instance and everything it contains will be deleted as well.',
+            ],
+        };
     }
     const { target, deleted, kept } = state.preview;
     if (deleted.length === 0) {
-        return `${question} ${target !== null && kept.includes(target) ? 'The linked instance stays in the knowledge base.' : 'Only the link is removed.'}`;
+        const stays = target !== null && kept.includes(target);
+        return {
+            text,
+            consequences: [stays ? 'The linked instance itself is kept; only the link will be removed.' : 'Only the link will be removed.'],
+        };
     }
     const contained = containedCount(target, deleted);
     const keptElsewhere = kept.filter((id) => id !== holderId).length;
-    const sentences = [
-        question,
-        `Nothing else links to the linked instance, so it will be deleted as well${contained > 0 ? `, together with the ${plural(contained, 'instance')} it contains` : ''}.`,
-    ];
-    if (keptElsewhere > 0) {
-        sentences.push(keptSentence(keptElsewhere));
+    const consequences = ['Nothing else links to the linked instance, so it will be deleted as well.'];
+    if (contained > 0) {
+        consequences.push(containedLine(contained));
     }
-    return sentences.join(' ');
+    if (keptElsewhere > 0) {
+        consequences.push(keptLine(keptElsewhere));
+    }
+    return { text, consequences };
 };

@@ -19,13 +19,17 @@ export const shortInstanceId = (id: string) => (UUID_INSTANCE_ID.test(id) ? trun
 export const instanceDisplayName = (instance: { id: string; label: string; types?: string[] }): string =>
     hasDistinctLabel(instance.label, instance.id) ? instance.label : `${instance.types?.[0] ?? 'instance'} · ${shortInstanceId(instance.id)}`;
 
+/** Reference to an instance in messages: the label with its short id, or the display name when it has no label. */
+export const instanceDisplayLabel = (instance: { id: string; label: string; types?: string[] }): string =>
+    hasDistinctLabel(instance.label, instance.id) ? `${instance.label} (${shortInstanceId(instance.id)})` : instanceDisplayName(instance);
+
 /**
  * Display label for a property value, shared by the rendered list, delete buttons,
  * confirmation dialogs, and toasts so all surfaces describe the same value identically.
  */
 export const valueDisplayLabel = (value: InstancePropertyGroup['values'][number]): string => {
     if (value.kind === 'object') {
-        return hasDistinctLabel(value.label, value.id) ? truncate(`${value.label} (${value.id})`) : instanceDisplayName(value);
+        return truncate(instanceDisplayLabel(value));
     }
     return value.value === '' ? '(empty)' : truncate(String(value.value));
 };

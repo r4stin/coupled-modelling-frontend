@@ -16,10 +16,9 @@ import PropertyValue from '@/components/InstanceInspector/PropertyValue';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { toDeleteTarget } from '@/lib/deleteTargets';
 import { containedCount, deletionMessage, plural, toPreviewState, unlinkMessage, UnlinkPreviewState } from '@/lib/deletion';
-import { hasDistinctLabel } from '@/lib/styles';
 import { useExplorerRefresh } from '@/lib/useExplorerRefresh';
 import { useExplorerSelection } from '@/lib/useExplorerSelection';
-import { instanceDisplayName, valueDisplayLabel } from '@/lib/valueDisplay';
+import { instanceDisplayLabel, instanceDisplayName, shortInstanceId, valueDisplayLabel } from '@/lib/valueDisplay';
 import {
     deleteInstance,
     deleteValue,
@@ -47,6 +46,8 @@ const isNotFound = (error: unknown) => error instanceof HTTPError && (error.resp
 const isRefused = (error: unknown) => error instanceof HTTPError && error.response.status === 400;
 /** A backend without the value-preview route never cascades either. */
 const isMissingRoute = (error: unknown) => error instanceof HTTPError && error.response.status === 404;
+
+const CLOSED_DIALOG = { title: '', text: '', consequences: [] as string[] };
 
 /** Instance details: label, id, types, and all direct properties with navigable object links and per-value deletion. */
 const InstanceInspector = ({ instanceId }: Props) => {
@@ -105,8 +106,7 @@ const InstanceInspector = ({ instanceId }: Props) => {
     // A definitive not-found (deleted instance, stale URL) wins over any cached data.
     const notFound = isNotFound(error);
 
-    const instanceDisplay =
-        data && hasDistinctLabel(data.label, data.id) ? `"${data.label}" (${data.id})` : `"${data ? instanceDisplayName(data) : instanceId}"`;
+    const instanceDisplay = `"${data ? instanceDisplayLabel(data) : shortInstanceId(instanceId)}"`;
 
     // Adding a value on an object property (or creating a child) can mint a new
     // instance of that property's class, so callers pass the property/class name
@@ -118,16 +118,10 @@ const InstanceInspector = ({ instanceId }: Props) => {
 
     const dialogContent =
         pendingDelete === null
-            ? { title: '', message: '' }
+            ? CLOSED_DIALOG
             : pendingDelete.type === 'instance'
-              ? {
-                    title: 'Delete instance',
-                    message: deletionMessage(instanceDisplay, previewState ?? { status: 'loading' }),
-                }
-              : {
-                    title: 'Delete value',
-                    message: unlinkMessage(pendingDelete.property, valueDisplayLabel(pendingDelete.value), instanceId, unlinkState),
-                };
+              ? { title: 'Delete instance', ...deletionMessage(instanceDisplay, previewState ?? { status: 'loading' }) }
+              : { title: 'Delete value', ...unlinkMessage(pendingDelete.property, valueDisplayLabel(pendingDelete.value), instanceId, unlinkState) };
 
     const confirmDelete = async () => {
         if (!pendingDelete) {
@@ -307,7 +301,8 @@ const InstanceInspector = ({ instanceId }: Props) => {
                     <ConfirmDialog
                         isOpen={pendingDelete !== null}
                         title={dialogContent.title}
-                        message={dialogContent.message}
+                        message={dialogContent.text}
+                        consequences={dialogContent.consequences}
                         isPending={pendingDelete?.deleting ?? false}
                         isConfirmDisabled={previewState?.status === 'loading' || unlinkState?.status === 'loading'}
                         onConfirm={confirmDelete}

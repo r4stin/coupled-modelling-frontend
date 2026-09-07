@@ -46,21 +46,33 @@ describe('deletion helpers', () => {
         expect(containedCount(null, [])).toBe(0);
     });
 
-    it('describes the loading and error states', () => {
-        expect(deletionMessage('"X"', { status: 'loading' })).toBe('Checking what deleting instance "X" would remove…');
-        expect(deletionMessage('"X"', { status: 'error' })).toBe(
-            'Are you sure you want to permanently delete instance "X" and everything it contains from the knowledge base?',
-        );
+    it('describes the loading and error states without claiming a scope it does not know', () => {
+        expect(deletionMessage('"X"', { status: 'loading' })).toEqual({ text: 'Checking what deleting "X" would remove…', consequences: [] });
+        expect(deletionMessage('"X"', { status: 'error' })).toEqual({
+            text: 'Permanently delete "X"?',
+            consequences: ['What it contains could not be checked; everything it contains will be deleted with it.'],
+        });
     });
 
-    it('spells out the cascade scope, the kept instances, and the removed links', () => {
-        expect(deletionMessage('"X"', preview(['x']))).toBe('Are you sure you want to permanently delete instance "X" from the knowledge base?');
-        expect(deletionMessage('"X"', preview(['x', 'a'], ['s']))).toBe(
-            'Are you sure you want to permanently delete instance "X" and the 1 instance it contains from the knowledge base? 1 instance linked below it is still reachable from elsewhere and will be kept.',
-        );
-        expect(deletionMessage('"X"', preview(['x'], ['s', 't'], ['p', 'q']))).toBe(
-            'Are you sure you want to permanently delete instance "X" from the knowledge base? 2 instances linked below it are still reachable from elsewhere and will be kept. It is also linked from 2 other instances. Those links will be removed.',
-        );
+    it('lists the cascade scope, the kept instances, and the removed links one per line, omitting zero counts', () => {
+        expect(deletionMessage('"X"', preview(['x']))).toEqual({ text: 'Permanently delete "X"?', consequences: [] });
+        expect(deletionMessage('"X"', preview(['x', 'a'], ['s']))).toEqual({
+            text: 'Permanently delete "X" and everything it contains?',
+            consequences: ['1 contained instance will be deleted with it.', '1 instance below it stays, since it is still used elsewhere.'],
+        });
+        expect(deletionMessage('"X"', preview(['x', 'a', 'b'], ['s', 't'], ['p', 'q']))).toEqual({
+            text: 'Permanently delete "X" and everything it contains?',
+            consequences: [
+                '2 contained instances will be deleted with it.',
+                '2 instances below it stay, since they are still used elsewhere.',
+                'Links from 2 other instances will be removed.',
+            ],
+        });
+        // Kept or linking instances alone never add the "everything it contains" scope.
+        expect(deletionMessage('"X"', preview(['x'], ['s', 't'], ['p']))).toEqual({
+            text: 'Permanently delete "X"?',
+            consequences: ['2 instances below it stay, since they are still used elsewhere.', '1 link from another instance will be removed.'],
+        });
     });
 
     it('fills in an unlink result an older backend leaves empty', () => {
@@ -77,30 +89,45 @@ describe('deletion helpers', () => {
         expect(toPreviewState(undefined, undefined, isRefusal)).toEqual({ status: 'loading' });
     });
 
-    it('asks a plain question for literals and while the unlink preview is pending or failed', () => {
-        const question = 'Are you sure you want to delete solver "CFD"?';
-        expect(unlinkMessage('solver', 'CFD', 'h', null)).toBe(question);
-        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'unsupported' })).toBe(question);
-        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'loading' })).toBe('Checking what deleting solver "CFD" would remove…');
-        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'error' })).toBe(
-            `${question} If nothing else links to it, the linked instance and everything it contains will be deleted as well.`,
-        );
+    it('asks a plain question for literals and while the unlink preview is pending, unsupported, or failed', () => {
+        const question = 'Permanently delete solver "CFD"?';
+        expect(unlinkMessage('solver', 'CFD', 'h', null)).toEqual({ text: question, consequences: [] });
+        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'unsupported' })).toEqual({ text: question, consequences: [] });
+        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'loading' })).toEqual({
+            text: 'Checking what deleting solver "CFD" would remove…',
+            consequences: [],
+        });
+        expect(unlinkMessage('solver', 'CFD', 'h', { status: 'error' })).toEqual({
+            text: question,
+            consequences: [
+                'What it links to could not be checked; if nothing else links to it, the linked instance and everything it contains will be deleted as well.',
+            ],
+        });
     });
 
-    it('spells out what unlinking collects, keeps, or leaves untouched', () => {
+    it('lists what unlinking collects, keeps, or leaves untouched', () => {
         const ready = (target: string | null, deleted: string[], kept: string[]) => ({
             status: 'ready' as const,
             preview: { target, deleted, kept },
         });
-        const question = 'Are you sure you want to delete solver "CFD"?';
-        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', [], ['t']))).toBe(`${question} The linked instance stays in the knowledge base.`);
-        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', [], []))).toBe(`${question} Only the link is removed.`);
-        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', ['t'], []))).toBe(
-            `${question} Nothing else links to the linked instance, so it will be deleted as well.`,
-        );
+        const question = 'Permanently delete solver "CFD"?';
+        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', [], ['t']))).toEqual({
+            text: question,
+            consequences: ['The linked instance itself is kept; only the link will be removed.'],
+        });
+        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', [], []))).toEqual({ text: question, consequences: ['Only the link will be removed.'] });
+        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', ['t'], []))).toEqual({
+            text: question,
+            consequences: ['Nothing else links to the linked instance, so it will be deleted as well.'],
+        });
         // The holder reached through a back-link is not counted among the kept instances.
-        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', ['t', 'a', 'b'], ['s', 'h']))).toBe(
-            `${question} Nothing else links to the linked instance, so it will be deleted as well, together with the 2 instances it contains. 1 instance linked below it is still reachable from elsewhere and will be kept.`,
-        );
+        expect(unlinkMessage('solver', 'CFD', 'h', ready('t', ['t', 'a', 'b'], ['s', 'h']))).toEqual({
+            text: question,
+            consequences: [
+                'Nothing else links to the linked instance, so it will be deleted as well.',
+                '2 contained instances will be deleted with it.',
+                '1 instance below it stays, since it is still used elsewhere.',
+            ],
+        });
     });
 });

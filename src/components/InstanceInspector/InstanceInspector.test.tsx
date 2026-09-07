@@ -11,7 +11,7 @@ import {
     getInstancePropertyMetadata,
     getValueDeletionPreview,
 } from '@/services/backend/instances';
-import { act, render, screen, waitFor } from '@/testUtils';
+import { act, render, screen, waitFor, within } from '@/testUtils';
 import { InstancePropertyMetadata } from '@/types/backend';
 
 vi.mock('@/services/backend/instances', async (importOriginal) => ({
@@ -202,7 +202,7 @@ describe('InstanceInspector', () => {
         mockDeleteValue.mockResolvedValue(literalDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete echo_level value 1' }));
-        expect(await screen.findByText('Are you sure you want to delete echo_level "1"?')).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete echo_level "1"?')).toBeInTheDocument();
         // Literals link nothing, so no unlink preview is fetched.
         expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
         expect(mockUnlinkPreview).not.toHaveBeenCalled();
@@ -221,11 +221,8 @@ describe('InstanceInspector', () => {
         mockDeleteValue.mockResolvedValue(keptTargetDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
-        expect(
-            await screen.findByText(
-                'Are you sure you want to delete data "Fluid mesh (instance_9)"? The linked instance stays in the knowledge base.',
-            ),
-        ).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete data "Fluid mesh (instance_9)"?')).toBeInTheDocument();
+        expect(await screen.findByText('The linked instance itself is kept; only the link will be removed.')).toBeInTheDocument();
         expect(mockUnlinkPreview).toHaveBeenCalledWith('instance_1', 'data', 'instance_9');
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'data', { kind: 'object', id: 'instance_9' });
@@ -240,11 +237,8 @@ describe('InstanceInspector', () => {
         mockDeleteValue.mockResolvedValue({ status: 'success', ...collected });
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
-        expect(
-            await screen.findByText(
-                'Are you sure you want to delete data "Fluid mesh (instance_9)"? Nothing else links to the linked instance, so it will be deleted as well, together with the 1 instance it contains.',
-            ),
-        ).toBeInTheDocument();
+        expect(await screen.findByText('Nothing else links to the linked instance, so it will be deleted as well.')).toBeInTheDocument();
+        expect(screen.getByText('1 contained instance will be deleted with it.')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(
             await screen.findByText('Deleted data "Fluid mesh (instance_9)" and the linked instance with 1 contained instance'),
@@ -257,7 +251,7 @@ describe('InstanceInspector', () => {
         mockDeleteValue.mockRejectedValue(new Error('GraphDB unavailable'));
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
-        await screen.findByText(/The linked instance stays in the knowledge base\./);
+        await screen.findByText('The linked instance itself is kept; only the link will be removed.');
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(await screen.findByText('GraphDB unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
@@ -270,7 +264,8 @@ describe('InstanceInspector', () => {
         mockDeleteValue.mockResolvedValue(literalDeletion);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
-        expect(await screen.findByText('Are you sure you want to delete data "Fluid mesh (instance_9)"?')).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete data "Fluid mesh (instance_9)"?')).toBeInTheDocument();
+        expect(screen.getByRole('alertdialog')).not.toHaveTextContent('linked instance');
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteValue).toHaveBeenCalledWith('instance_1', 'data', { kind: 'object', id: 'instance_9' });
         expect(await screen.findByText('Deleted data "Fluid mesh (instance_9)"')).toBeInTheDocument();
@@ -292,7 +287,9 @@ describe('InstanceInspector', () => {
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete data value Fluid mesh (instance_9)' }));
         expect(
-            await screen.findByText(/If nothing else links to it, the linked instance and everything it contains will be deleted as well\./),
+            await screen.findByText(
+                'What it links to could not be checked; if nothing else links to it, the linked instance and everything it contains will be deleted as well.',
+            ),
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
@@ -335,7 +332,8 @@ describe('InstanceInspector', () => {
         const onUrlUpdate = vi.fn();
         render(<InstanceInspector instanceId="instance_1" />, { searchParams: '?class=solvers&instance=instance_1', onUrlUpdate });
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete "Fluid solver (instance_1)"?')).toBeInTheDocument();
+        expect(within(screen.getByRole('alertdialog')).queryByRole('list')).toBeNull();
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(mockDeleteInstance).toHaveBeenCalledWith('instance_1');
         await waitFor(() => expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get('instance')).toBeNull());
@@ -354,11 +352,12 @@ describe('InstanceInspector', () => {
         mockDeleteInstance.mockResolvedValue({ status: 'success', ...cascade });
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(
-            await screen.findByText(
-                /and the 2 instances it contains from the knowledge base\? 1 instance linked below it is still reachable from elsewhere and will be kept\. It is also linked from 1 other instance\. That link will be removed\./,
-            ),
-        ).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete "Fluid solver (instance_1)" and everything it contains?')).toBeInTheDocument();
+        expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+            '2 contained instances will be deleted with it.',
+            '1 instance below it stays, since it is still used elsewhere.',
+            '1 link from another instance will be removed.',
+        ]);
         expect(mockDeletionPreview).toHaveBeenCalledWith('instance_1');
         await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
         expect(await screen.findByText(/deleted with 2 contained instances/)).toBeInTheDocument();
@@ -369,10 +368,10 @@ describe('InstanceInspector', () => {
         mockDeletionPreview.mockResolvedValue(leafPreview);
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete "Fluid solver (instance_1)"?')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/permanently delete instance "Fluid solver" \(instance_1\) from the knowledge base/)).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete "Fluid solver (instance_1)"?')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
         expect(mockDeletionPreview).toHaveBeenCalledTimes(2);
     });
@@ -382,9 +381,22 @@ describe('InstanceInspector', () => {
         mockDeletionPreview.mockReturnValue(new Promise(() => undefined));
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/Checking what deleting instance/)).toBeInTheDocument();
+        expect(await screen.findByText('Checking what deleting "Fluid solver (instance_1)" would remove…')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
         expect(mockDeleteInstance).not.toHaveBeenCalled();
+    });
+
+    it('names a labelled UUID instance by its label and short id in the dialog and the toast', async () => {
+        const id = 'instance_733f1d35-6558-4d16-8066-8666b14e300a';
+        mockMetadata.mockResolvedValue({ ...metadata, id, label: 'Settings A' });
+        const preview = { instance: id, deleted: [id], kept: [], unlinked_from: [] };
+        mockDeletionPreview.mockResolvedValue(preview);
+        mockDeleteInstance.mockResolvedValue({ status: 'success', ...preview });
+        render(<InstanceInspector instanceId={id} />);
+        await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
+        expect(await screen.findByText('Permanently delete "Settings A (instance_733f1d…)"?')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        expect(await screen.findByText('Instance "Settings A (instance_733f1d…)" deleted')).toBeInTheDocument();
     });
 
     it('falls back to a generic cascade warning when the preview fails', async () => {
@@ -392,7 +404,8 @@ describe('InstanceInspector', () => {
         mockDeletionPreview.mockRejectedValue(new Error('GraphDB unavailable'));
         render(<InstanceInspector instanceId="instance_1" />);
         await userEvent.click(await screen.findByRole('button', { name: 'Delete instance' }));
-        expect(await screen.findByText(/and everything it contains from the knowledge base\?/)).toBeInTheDocument();
+        expect(await screen.findByText('Permanently delete "Fluid solver (instance_1)"?')).toBeInTheDocument();
+        expect(screen.getByText('What it contains could not be checked; everything it contains will be deleted with it.')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
 
